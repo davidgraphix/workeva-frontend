@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+/*
+  Workeva design tokens.
+
+  The palette is deliberately restrained: navy carries navigation and authority,
+  blue is the single primary action colour, and the status colours only ever
+  appear where they mean something. Purple is reserved for future intelligence
+  features and is not used anywhere in the MVP - having a token for it is not the
+  same as decorating with it.
+*/
+@theme {
+  --color-navy-950: #0b1220;
+  --color-navy-900: #111a2e;
+  --color-navy-800: #1b2740;
+  --color-navy-700: #26344f;
+  --color-navy-600: #35455f;
+
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+
+  /* Reserved for future AI / intelligence features. Unused in the MVP. */
+  --color-accent-600: #7c3aed;
+  --color-cyan-600: #06b6d4;
+
+  --color-canvas: #f8fafc;
+  --color-surface: #ffffff;
+  --color-ink: #111827;
+
+  --color-success-50: #f0fdf4;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-warning-50: #fffbeb;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-danger-50: #fef2f2;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+
+  --radius-card: 0.625rem;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /*
+    A visible focus ring on everything keyboard-reachable. Never removed - if it
+    looks wrong somewhere, the fix is to restyle it, not to hide it.
+  */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  /* Respect a reader who has asked for less movement. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Skip link: present for keyboard users, out of the way for everyone else. */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    padding: 0.75rem 1rem;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-weight: 600;
+    border-radius: 0 0 0.5rem 0;
+  }
+
+  .skip-link:focus {
+    left: 0;
+  }
+}
+
+/* Loading skeleton shimmer. */
+@keyframes workeva-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.animate-skeleton {
+  animation: workeva-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Tabular numbers keep times and counts from jittering as they update. */
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
