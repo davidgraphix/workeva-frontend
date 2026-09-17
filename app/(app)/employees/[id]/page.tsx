@@ -110,7 +110,7 @@ export default function EmployeeProfilePage({ params }: { params: Promise<{ id: 
               ].map(([label, value]) => (
                 <div key={label} className="min-w-0">
                   <dt className="text-slate-500">{label}</dt>
-                  <dd className="truncate font-medium capitalize-first text-slate-900">{value}</dd>
+                  <dd className="truncate font-medium text-slate-900">{value}</dd>
                 </div>
               ))}
             </dl>
