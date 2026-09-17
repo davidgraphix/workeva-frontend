@@ -20,7 +20,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <div className="w-full max-w-sm">{children}</div>
         </main>
 
-        <p className="mt-10 text-xs text-slate-400">
+        <p className="mt-10 text-xs text-slate-600">
           Workeva — workforce and company operations
         </p>
       </div>

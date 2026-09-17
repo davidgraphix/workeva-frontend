@@ -135,9 +135,14 @@ function AttendanceSection() {
   const settings = useCompanySettings();
   const update = useUpdateSettings();
   const toast = useToast();
-  const [draft, setDraft] = useState<CompanySettingsResponse | null>(null);
+  const [draft, setDraft] = useState<CompanySettingsResponse | null>(settings.data ?? null);
+  const [draftSource, setDraftSource] = useState(settings.data);
 
-  useEffect(() => { if (settings.data) setDraft(settings.data); }, [settings.data]);
+  // Fresh settings from the server replace the draft.
+  if (settings.data !== draftSource) {
+    setDraftSource(settings.data);
+    if (settings.data) setDraft(settings.data);
+  }
 
   if (settings.isLoading || !draft) return settings.error ? <Card><ErrorState error={settings.error} onRetry={() => settings.refetch()} /></Card> : <PageSkeleton />;
 

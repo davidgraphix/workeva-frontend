@@ -42,7 +42,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(readStoredOrganization);
 
   useEffect(() => {
     let active = true;
@@ -67,16 +67,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     };
   }, [supabase, queryClient]);
 
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(ORGANIZATION_STORAGE_KEY);
-      if (stored) setOrganizationId(stored);
-    } catch {
-      // Private browsing or blocked storage. The API falls back to the user's
-      // single membership, which is the common case anyway.
-    }
-  }, []);
-
   const accessToken = session?.access_token ?? null;
 
   const meQuery = useQuery({
@@ -93,23 +83,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   // Settle on an organization once we know which ones exist. Without this, a user
   // with two memberships would sit on an "ambiguous organization" error forever.
+  const settledOrganizationId = !me
+    ? organizationId
+    : me.active
+      ? me.active.organizationId
+      : organizationId ?? me.memberships[0]?.organizationId ?? null;
+
+  if (settledOrganizationId !== organizationId) setOrganizationId(settledOrganizationId);
+
   useEffect(() => {
-    if (!me) return;
-
-    if (me.active) {
-      if (me.active.organizationId !== organizationId) {
-        persistOrganization(me.active.organizationId);
-        setOrganizationId(me.active.organizationId);
-      }
-      return;
-    }
-
-    const first = me.memberships[0];
-    if (!organizationId && first) {
-      persistOrganization(first.organizationId);
-      setOrganizationId(first.organizationId);
-    }
-  }, [me, organizationId]);
+    if (organizationId) persistOrganization(organizationId);
+  }, [organizationId]);
 
   const switchOrganization = useCallback(
     (nextOrganizationId: string) => {
@@ -133,6 +117,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       // Nothing to clean up if storage is unavailable.
     }
     queryClient.clear();
+    // A full page load on purpose: nothing from the signed-in session survives in memory.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/login";
   }, [supabase, queryClient]);
 
@@ -171,6 +157,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+}
+
+function readStoredOrganization(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(ORGANIZATION_STORAGE_KEY);
+  } catch {
+    // Private browsing or blocked storage. The API falls back to the user's
+    // single membership, which is the common case anyway.
+    return null;
+  }
 }
 
 function persistOrganization(organizationId: string) {

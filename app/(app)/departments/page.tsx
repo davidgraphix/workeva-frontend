@@ -70,7 +70,7 @@ export default function DepartmentsPage() {
                     {d.description && <p className="text-xs text-slate-500">{d.description}</p>}
                   </div>
                 ) },
-                { key: "manager", header: "Manager", render: (d) => d.managerName ?? <span className="text-slate-400">No manager</span> },
+                { key: "manager", header: "Manager", render: (d) => d.managerName ?? <span className="text-slate-600">No manager</span> },
                 { key: "count", header: "Active employees", align: "right", render: (d) => <span className="numeric">{d.employeeCount}</span> },
                 { key: "actions", header: "", align: "right", render: (d) => canManage && !d.isArchived && (
                   <div className="flex justify-end gap-1">

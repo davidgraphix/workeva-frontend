@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { Alert } from "@/components/ui/surfaces";
+import { safeRedirectPath } from "@/lib/routes";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 const schema = z
@@ -48,9 +49,12 @@ export default function SignUpPage() {
 
     const parsed = schema.safeParse(values);
     if (!parsed.success) {
+      // Show the first - most fundamental - problem per field, not whichever rule ran last.
+      const reported = new Set<string>();
       for (const issue of parsed.error.issues) {
         const field = issue.path[0];
-        if (typeof field === "string") {
+        if (typeof field === "string" && !reported.has(field)) {
+          reported.add(field);
           setError(field as keyof FormValues, { message: issue.message });
         }
       }
@@ -173,7 +177,7 @@ export default function SignUpPage() {
         </Link>
       </p>
 
-      <p className="mt-3 text-xs text-slate-400">
+      <p className="mt-3 text-xs text-slate-600">
         Been invited by your employer? Open the link in your invitation email — it
         will bring you here and put you in the right company.
       </p>
@@ -184,5 +188,6 @@ export default function SignUpPage() {
 /** The in-app path to return to after confirmation. Only same-origin paths are honoured. */
 function safeNext(): string | null {
   const next = new URLSearchParams(window.location.search).get("next");
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+  const safe = safeRedirectPath(next, "");
+  return safe || null;
 }

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { safeRedirectPath } from "@/lib/routes";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get("next");
 
   // Only ever redirect within this app, never to an address from the query string.
-  const destination = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+  const destination = safeRedirectPath(next);
 
   if (code) {
     const supabase = await createSupabaseServerClient();

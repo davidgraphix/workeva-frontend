@@ -14,11 +14,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * redirect reaches a page that can load no data.
  */
 
-const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password", "/auth/callback", "/invite"];
-
-function isPublic(pathname: string) {
-  return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
-}
+import { isPublicPath as isPublic } from "@/lib/routes";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
