@@ -140,7 +140,7 @@ export const queryKeys = {
  * refreshes every filtered task list. (TanStack Query matches keys element by
  * element; a trailing `null` would match nothing.)
  */
-function withFilters(...parts: unknown[]): unknown[] {
+export function withFilters(...parts: unknown[]): unknown[] {
   const filters = parts[parts.length - 1];
   return filters === undefined ? parts.slice(0, -1) : parts;
 }

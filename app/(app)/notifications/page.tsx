@@ -87,7 +87,7 @@ export default function NotificationsPage() {
                         <span className="min-w-0 flex-1">
                           <span className={cn("block text-sm", n.isRead ? "text-slate-700" : "font-semibold text-slate-900")}>{n.title}</span>
                           <span className="block text-sm text-slate-500">{n.body}</span>
-                          <span className="mt-0.5 block text-xs text-slate-400">{formatAgo(n.createdAt)}</span>
+                          <span className="mt-0.5 block text-xs text-slate-600">{formatAgo(n.createdAt)}</span>
                         </span>
                         {!n.isRead && (
                           <>

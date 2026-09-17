@@ -53,9 +53,13 @@ export default function ResetPasswordPage() {
 
     const parsed = schema.safeParse(values);
     if (!parsed.success) {
+      const reported = new Set<string>();
       for (const issue of parsed.error.issues) {
         const field = issue.path[0];
-        if (typeof field === "string") setError(field as keyof FormValues, { message: issue.message });
+        if (typeof field === "string" && !reported.has(field)) {
+          reported.add(field);
+          setError(field as keyof FormValues, { message: issue.message });
+        }
       }
       return;
     }

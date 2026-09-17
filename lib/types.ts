@@ -143,6 +143,8 @@ export interface MeResponse {
   memberships: MembershipSummary[];
   active: ActiveMembership | null;
   needsOrganization: boolean;
+  /** Why there is no active organization: "employee_inactive", "organization_forbidden" or "organization_ambiguous". */
+  accessIssue: string | null;
 }
 
 // ---------- Organization ----------
@@ -174,7 +176,6 @@ export interface CompanySettingsResponse {
   suspiciousDistanceMeters: number;
   suspiciousFailedAttemptsThreshold: number;
   enforceLeaveBalance: boolean;
-  allowLeaveAttachments: boolean;
   notifyManagersOnClockIn: boolean;
   notifyManagersOnLateArrival: boolean;
   emailNotificationsEnabled: boolean;
@@ -397,7 +398,6 @@ export interface LeaveRequestResponse {
   decidedByName: string | null;
   decidedAt: string | null;
   decisionNote: string | null;
-  hasAttachment: boolean;
   createdAt: string;
 }
 

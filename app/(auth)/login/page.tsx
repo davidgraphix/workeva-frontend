@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { Alert } from "@/components/ui/surfaces";
+import { safeRedirectPath } from "@/lib/routes";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 const schema = z.object({
@@ -58,7 +59,7 @@ function LoginForm() {
       return;
     }
 
-    router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard");
+    router.push(safeRedirectPath(next));
     router.refresh();
   }
 

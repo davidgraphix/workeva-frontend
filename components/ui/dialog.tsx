@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -29,6 +29,10 @@ export function Dialog({
   size?: "sm" | "md" | "lg";
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  // Unique per instance: several dialogs live on one page, and duplicate ids would give
+  // them all the same (wrong) accessible name.
+  const titleId = useId();
+  const descriptionId = useId();
 
   useEffect(() => {
     const dialog = ref.current;
@@ -70,8 +74,8 @@ export function Dialog({
         // Clicking the backdrop (the dialog element itself) closes it.
         if (event.target === ref.current) onClose();
       }}
-      aria-labelledby="dialog-title"
-      aria-describedby={description ? "dialog-description" : undefined}
+      aria-labelledby={titleId}
+      aria-describedby={description ? descriptionId : undefined}
       className={cn(
         "m-0 w-full max-w-none bg-transparent p-0 backdrop:bg-slate-900/50",
         // Full-height sheet on a phone, centred card from sm upwards.
@@ -82,11 +86,11 @@ export function Dialog({
       <div className="flex h-full flex-col overflow-hidden bg-white shadow-xl sm:rounded-lg">
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div className="min-w-0">
-            <h2 id="dialog-title" className="text-base font-semibold text-slate-900">
+            <h2 id={titleId} className="text-base font-semibold text-slate-900">
               {title}
             </h2>
             {description && (
-              <p id="dialog-description" className="mt-0.5 text-sm text-slate-500">
+              <p id={descriptionId} className="mt-0.5 text-sm text-slate-500">
                 {description}
               </p>
             )}

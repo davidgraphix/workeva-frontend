@@ -15,7 +15,8 @@ const variants: Record<Variant, string> = {
     "bg-white text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 active:bg-slate-100 disabled:text-slate-400",
   ghost: "bg-transparent text-slate-700 hover:bg-slate-100 active:bg-slate-200 disabled:text-slate-400",
   danger: "bg-danger-600 text-white hover:bg-danger-700 active:bg-danger-700 disabled:bg-danger-600/50",
-  success: "bg-success-600 text-white hover:bg-success-700 active:bg-success-700 disabled:bg-success-600/50",
+  // success-700 rather than 600: white on #16A34A is only 3.3:1, below WCAG AA.
+  success: "bg-success-700 text-white hover:bg-success-800 active:bg-success-800 disabled:bg-success-700/50",
 };
 
 const sizes: Record<Size, string> = {
