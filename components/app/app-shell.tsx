@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, ChevronDown, LogOut, Menu, X } from "lucide-react";
@@ -28,17 +28,16 @@ import {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { me, can, signOut } = useSession();
   const pathname = usePathname();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  // The drawer remembers the page it was opened on, so navigating closes it - otherwise
+  // it would stay open over the new page.
+  const [drawerOpenOn, setDrawerOpenOn] = useState<string | null>(null);
+  const drawerOpen = drawerOpenOn === pathname;
+  const setDrawerOpen = (open: boolean) => setDrawerOpenOn(open ? pathname : null);
 
   const hasEmployeeRecord = Boolean(me?.active?.employeeId);
   const primary = visibleItems(primaryNavigation, can, hasEmployeeRecord);
   const secondary = visibleItems(secondaryNavigation, can, hasEmployeeRecord);
   const mobile = visibleItems(mobileNavigation, can, hasEmployeeRecord);
-
-  // Close the drawer on navigation, or it stays open over the new page.
-  useEffect(() => {
-    setDrawerOpen(false);
-  }, [pathname]);
 
   return (
     <div className="min-h-dvh bg-canvas">

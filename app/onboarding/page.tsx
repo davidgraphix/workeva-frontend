@@ -33,21 +33,18 @@ export default function OnboardingPage() {
   const toast = useToast();
   const { me, accessToken, isLoading, switchOrganization, refresh, signOut } = useSession();
 
-  const [step, setStep] = useState(0);
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [chosenStep, setStep] = useState<number | null>(null);
+  const [createdOrganizationId, setOrganizationId] = useState<string | null>(null);
+
+  // A company that already exists resumes at the office step.
+  const organizationId = createdOrganizationId ?? me?.active?.organizationId ?? null;
+  const step = chosenStep ?? (me?.active ? 1 : 0);
 
   // A user who already has a company and finished setup doesn't belong here.
   useEffect(() => {
     if (isLoading || !me) return;
-    if (me.active?.onboardingCompleted) {
-      router.replace("/dashboard");
-      return;
-    }
-    if (me.active && !organizationId) {
-      setOrganizationId(me.active.organizationId);
-      setStep(1);
-    }
-  }, [isLoading, me, organizationId, router]);
+    if (me.active?.onboardingCompleted) router.replace("/dashboard");
+  }, [isLoading, me, router]);
 
   const request = <T,>(path: string, method: "GET" | "POST" | "PUT", body?: unknown) =>
     api<T>(path, { method, body, token: accessToken, organizationId });

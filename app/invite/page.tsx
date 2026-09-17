@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -16,6 +16,16 @@ import type { AcceptInvitationResponse, InvitationPreviewResponse } from "@/lib/
 
 const PENDING_TOKEN_KEY = "workeva.pendingInvitation";
 
+const subscribeToNothing = () => () => {};
+
+function readPendingToken() {
+  try {
+    return sessionStorage.getItem(PENDING_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * The invitation journey: see what you're joining, sign in or create an account
  * with the invited address, then accept.
@@ -30,23 +40,22 @@ function InviteContent() {
   const toast = useToast();
   const { accessToken, me, isLoading: sessionLoading, switchOrganization, refresh, signOut } = useSession();
 
-  const [token, setToken] = useState<string | null>(null);
   const [accepting, setAccepting] = useState(false);
   const [acceptError, setAcceptError] = useState<string | null>(null);
 
+  const fromUrl = searchParams.get("token");
+  const pending = useSyncExternalStore(subscribeToNothing, readPendingToken, () => null);
+  const token = fromUrl ?? pending;
+
+  // Remember the token across the sign-up detour.
   useEffect(() => {
-    const fromUrl = searchParams.get("token");
+    if (!fromUrl) return;
     try {
-      if (fromUrl) {
-        sessionStorage.setItem(PENDING_TOKEN_KEY, fromUrl);
-        setToken(fromUrl);
-      } else {
-        setToken(sessionStorage.getItem(PENDING_TOKEN_KEY));
-      }
+      sessionStorage.setItem(PENDING_TOKEN_KEY, fromUrl);
     } catch {
-      setToken(fromUrl);
+      // Storage blocked; the link still works in this tab.
     }
-  }, [searchParams]);
+  }, [fromUrl]);
 
   // The preview endpoint needs a signed-in caller; before that we show a generic prompt.
   const preview = useQuery<InvitationPreviewResponse, ApiError>({
