@@ -17,3 +17,6 @@ next-env.d.ts
 coverage/
 playwright-report/
 test-results/
+
+# E2E credentials
+.env.e2e
