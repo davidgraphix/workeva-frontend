@@ -66,7 +66,8 @@ export default function SignUpPage() {
       password: parsed.data.password,
       options: {
         data: { full_name: parsed.data.fullName.trim() },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+        // An invitee returns to their invitation; a founder goes on to company setup.
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext() ?? "/onboarding")}`,
       },
     });
 
@@ -178,4 +179,10 @@ export default function SignUpPage() {
       </p>
     </div>
   );
+}
+
+/** The in-app path to return to after confirmation. Only same-origin paths are honoured. */
+function safeNext(): string | null {
+  const next = new URLSearchParams(window.location.search).get("next");
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : null;
 }
