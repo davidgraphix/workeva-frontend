@@ -3,8 +3,9 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * Three tiers. Build first with `npm run e2e:build`.
  *
- *  public  - signed-out journey against the local build: route protection, accessibility,
- *            keyboard and mobile layout.
+ *  public  - signed-out journey: route protection, accessibility, keyboard and mobile
+ *            layout. Runs against the local build, or against a real deployment when
+ *            E2E_PUBLIC_BASE_URL is set (no local servers are started then).
  *
  *  ui      - signed-in screens against the local build and e2e/mock-backend.mjs, a fixture
  *            stand-in for Supabase Auth and the API: layout, mobile behaviour, accessibility
@@ -17,6 +18,8 @@ import { defineConfig, devices } from "@playwright/test";
  * iOS Safari or Android Chrome, and physical-device testing is still required.
  */
 const stagingBaseUrl = process.env.E2E_BASE_URL;
+// Point the signed-out tier at a real environment instead of the local mock-backed build.
+const publicBaseUrl = process.env.E2E_PUBLIC_BASE_URL;
 const localPort = 3100;
 const mockPort = 54399;
 
@@ -42,17 +45,17 @@ export default defineConfig({
     {
       name: "public-desktop",
       testDir: "e2e/public",
-      use: { ...devices["Desktop Chrome"], baseURL: `http://localhost:${localPort}` },
+      use: { ...devices["Desktop Chrome"], baseURL: publicBaseUrl ?? `http://localhost:${localPort}` },
     },
     {
       name: "public-android",
       testDir: "e2e/public",
-      use: { ...devices["Pixel 7"], baseURL: `http://localhost:${localPort}` },
+      use: { ...devices["Pixel 7"], baseURL: publicBaseUrl ?? `http://localhost:${localPort}` },
     },
     {
       name: "public-iphone",
       testDir: "e2e/public",
-      use: { ...devices["iPhone 14"], browserName: "chromium", baseURL: `http://localhost:${localPort}` },
+      use: { ...devices["iPhone 14"], browserName: "chromium", baseURL: publicBaseUrl ?? `http://localhost:${localPort}` },
     },
     {
       name: "staging-desktop",
@@ -66,7 +69,8 @@ export default defineConfig({
       use: { ...devices["Pixel 7"], baseURL: stagingBaseUrl },
     },
   ],
-  webServer: stagingBaseUrl
+  // Local servers are only needed when something actually points at them.
+  webServer: stagingBaseUrl || publicBaseUrl
     ? undefined
     : [
         {
