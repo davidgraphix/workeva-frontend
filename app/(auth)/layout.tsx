@@ -2,13 +2,14 @@ import Link from "next/link";
 
 /**
  * The signed-out frame. One column on a phone; a split layout on large screens
- * where the right-hand panel says what the product is for, because a sign-in
+ * where the left-hand panel says what the product is for, because a sign-in
  * page is often the first thing a pilot company's staff ever see.
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
-      <div className="flex flex-col px-5 py-8 sm:px-10">
+      {/* Form column: right on large screens */}
+      <div className="flex flex-col px-5 py-8 sm:px-10 lg:order-2">
         <Link href="/login" className="mb-10 inline-flex items-center gap-2.5 self-start">
           <span aria-hidden className="grid size-8 place-items-center rounded bg-navy-950 text-sm font-bold text-white">
             W
@@ -25,7 +26,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </p>
       </div>
 
-      <aside className="hidden bg-navy-950 p-12 lg:flex lg:flex-col lg:justify-center">
+      {/* Info panel: left on large screens */}
+      <aside className="hidden bg-navy-950 p-12 lg:order-1 lg:flex lg:flex-col lg:justify-center">
         <div className="max-w-md">
           <p className="text-xs font-semibold uppercase tracking-widest text-brand-500">Workeva</p>
           <h2 className="mt-4 text-3xl font-semibold leading-tight text-white">
