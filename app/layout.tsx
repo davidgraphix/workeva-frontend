@@ -22,9 +22,13 @@ export const viewport: Viewport = {
   themeColor: "#0B1220",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <body className="min-h-dvh antialiased">
         <a href="#main" className="skip-link">
           Skip to content

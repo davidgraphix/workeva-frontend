@@ -7,14 +7,18 @@ import { NextResponse, type NextRequest } from "next/server";
  *  1. Refresh the Supabase session cookie, so a long-lived tab does not silently
  *     lose its token mid-task.
  *  2. Keep signed-out visitors out of the application shell, and signed-in users
- *     out of the sign-in pages.
+ *     out of the sign-in pages and the marketing landing page.
  *
  * This is a routing convenience, not a security control. Every API call is
  * independently authorised by the backend, so a user who defeats this
  * redirect reaches a page that can load no data.
  */
 
-import { isPublicPath as isPublic } from "@/lib/routes";
+import { isPublicPath } from "@/lib/routes";
+
+// The landing page at "/" is public, in addition to whatever lib/routes marks public.
+const isPublic = (pathname: string) =>
+  pathname === "/" || isPublicPath(pathname);
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -54,11 +58,16 @@ export async function middleware(request: NextRequest) {
     const signIn = request.nextUrl.clone();
     signIn.pathname = "/login";
     // Remember where they were headed so sign-in can return them there.
-    signIn.search = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname + search)}`;
+    signIn.search =
+      pathname === "/" ? "" : `?next=${encodeURIComponent(pathname + search)}`;
     return NextResponse.redirect(signIn);
   }
 
-  if (user && (pathname === "/login" || pathname === "/signup")) {
+  // Signed-in users skip the landing page and the sign-in pages.
+  if (
+    user &&
+    (pathname === "/" || pathname === "/login" || pathname === "/signup")
+  ) {
     const home = request.nextUrl.clone();
     home.pathname = "/dashboard";
     home.search = "";
