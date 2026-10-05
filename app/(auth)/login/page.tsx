@@ -65,70 +65,88 @@ function LoginForm() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-slate-900">Sign in</h1>
-      <p className="mt-1.5 text-sm text-slate-500">Welcome back. Let&apos;s get you to work.</p>
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+          Sign in
+        </h1>
+        <p className="mt-2 text-sm leading-relaxed text-slate-500">
+          Welcome back. Let&apos;s get you to work.
+        </p>
+      </header>
 
-      {justVerified && (
-        <div className="mt-5">
-          <Alert tone="success" title="Email confirmed">
-            You can sign in now.
-          </Alert>
+      {(justVerified || justReset) && (
+        <div className="mt-6 space-y-3" role="status" aria-live="polite">
+          {justVerified && (
+            <Alert tone="success" title="Email confirmed">
+              You can sign in now.
+            </Alert>
+          )}
+
+          {justReset && (
+            <Alert tone="success" title="Password updated">
+              Sign in with your new password.
+            </Alert>
+          )}
         </div>
       )}
 
-      {justReset && (
-        <div className="mt-5">
-          <Alert tone="success" title="Password updated">
-            Sign in with your new password.
-          </Alert>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4" noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-8" noValidate>
         {formError && (
-          <Alert tone="danger">
-            <span>{formError}</span>
-          </Alert>
+          <div className="mb-6" role="alert">
+            <Alert tone="danger">
+              <span>{formError}</span>
+            </Alert>
+          </div>
         )}
 
-        <Input
-          label="Email address"
-          type="email"
-          autoComplete="email"
-          inputMode="email"
-          autoFocus
-          required
-          error={errors.email?.message}
-          {...register("email", { required: "Enter your email address." })}
-        />
-
-        <div>
+        <div className="space-y-5">
           <Input
-            label="Password"
-            type="password"
-            autoComplete="current-password"
+            label="Email address"
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            autoFocus
             required
-            error={errors.password?.message}
-            {...register("password", { required: "Enter your password." })}
+            error={errors.email?.message}
+            {...register("email", { required: "Enter your email address." })}
           />
-          <div className="mt-1.5 text-right">
-            <Link href="/forgot-password" className="text-xs font-medium text-brand-600 hover:text-brand-700">
-              Forgotten your password?
-            </Link>
+
+          <div>
+            <Input
+              label="Password"
+              type="password"
+              autoComplete="current-password"
+              required
+              error={errors.password?.message}
+              {...register("password", { required: "Enter your password." })}
+            />
+            <div className="mt-2 text-right">
+              <Link
+                href="/forgot-password"
+                className="rounded-sm text-xs font-medium text-brand-600 underline-offset-4 transition-colors hover:text-brand-700 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+              >
+                Forgotten your password?
+              </Link>
+            </div>
           </div>
         </div>
 
-        <Button type="submit" fullWidth size="lg" loading={isSubmitting}>
+        <Button type="submit" fullWidth size="lg" loading={isSubmitting} className="mt-8">
           Sign in
         </Button>
       </form>
 
-      <p className="mt-6 text-sm text-slate-500">
-        Setting up a new company?{" "}
-        <Link href="/signup" className="font-medium text-brand-600 hover:text-brand-700">
-          Create an account
-        </Link>
-      </p>
+      <footer className="mt-8 border-t border-slate-200 pt-6">
+        <p className="text-center text-sm text-slate-500">
+          Setting up a new company?{" "}
+          <Link
+            href="/signup"
+            className="font-medium text-brand-600 underline-offset-4 transition-colors hover:text-brand-700 hover:underline"
+          >
+            Create an account
+          </Link>
+        </p>
+      </footer>
     </div>
   );
 }
