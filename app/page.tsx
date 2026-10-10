@@ -7,7 +7,6 @@ import {
   CalendarCheck,
   Check,
   CheckCircle2,
-  ChevronDown,
   ClipboardCheck,
   ListChecks,
   MapPin,
@@ -286,7 +285,7 @@ export default function LandingPage() {
             className="anim-aurora-b absolute -right-24 top-40 size-96 rounded-full bg-violet-600/20 blur-3xl"
           />
 
-          <div className="relative mx-auto max-w-6xl px-5 pb-0 pt-16 text-center sm:px-8 sm:pt-20">
+          <div className="relative mx-auto max-w-6xl px-5 pb-0 pt-28 text-center sm:px-8 sm:pt-32">
             <p
               className="anim-fade-up mx-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1 text-xs font-medium text-slate-300 backdrop-blur"
               style={delay(100)}
@@ -366,7 +365,7 @@ export default function LandingPage() {
         {/* Features */}
         <section
           id="features"
-          className="relative scroll-mt-16 overflow-hidden"
+          className="relative scroll-mt-24 overflow-hidden"
         >
           <div
             aria-hidden
@@ -409,7 +408,7 @@ export default function LandingPage() {
         {/* Roles */}
         <section
           id="roles"
-          className="scroll-mt-16 border-y border-slate-200 bg-slate-50"
+          className="scroll-mt-24 border-y border-slate-200 bg-slate-50"
         >
           <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
             <Reveal className="mx-auto max-w-2xl text-center">
@@ -509,7 +508,7 @@ export default function LandingPage() {
         </section>
 
         {/* How it works */}
-        <section id="how-it-works" className="scroll-mt-16 bg-white">
+        <section id="how-it-works" className="scroll-mt-24 bg-white">
           <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
             <Reveal>
               <p className={eyebrow}>How it works</p>
@@ -547,7 +546,7 @@ export default function LandingPage() {
         {/* Security */}
         <section
           id="security"
-          className="scroll-mt-16 border-y border-slate-200 bg-slate-50"
+          className="scroll-mt-24 border-y border-slate-200 bg-slate-50"
         >
           <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-2">
             <Reveal>
@@ -580,8 +579,11 @@ export default function LandingPage() {
           </div>
         </section>
 
-             {/* FAQ */}
-        <section id="faq" className="scroll-mt-16 border-t border-slate-200 bg-white">
+        {/* FAQ */}
+        <section
+          id="faq"
+          className="scroll-mt-24 border-t border-slate-200 bg-white"
+        >
           <div className="mx-auto grid max-w-6xl gap-10 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-5 lg:gap-16">
             {/* Left: heading */}
             <Reveal className="lg:col-span-2">
@@ -591,7 +593,8 @@ export default function LandingPage() {
                   Common questions
                 </h2>
                 <p className="mt-4 max-w-md text-base leading-relaxed text-slate-600">
-                  Straight answers about attendance, access and how your company&apos;s data is handled.
+                  Straight answers about attendance, access and how your
+                  company&apos;s data is handled.
                 </p>
               </div>
             </Reveal>
@@ -608,7 +611,9 @@ export default function LandingPage() {
                       <span className="w-6 shrink-0 text-xs font-semibold tabular-nums text-slate-400 transition-colors duration-300 group-open:text-blue-600">
                         {String(i + 1).padStart(2, "0")}
                       </span>
-                      <span className="flex-1 text-base font-semibold text-slate-900">{question}</span>
+                      <span className="flex-1 text-base font-semibold text-slate-900">
+                        {question}
+                      </span>
                       <span className="grid size-8 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 transition duration-300 group-hover:border-slate-300 group-open:rotate-45 group-open:border-blue-600 group-open:bg-blue-600 group-open:text-white">
                         <Plus aria-hidden className="size-4" />
                       </span>
