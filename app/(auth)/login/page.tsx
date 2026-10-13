@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { ArrowRight, LogIn, ShieldCheck } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -64,18 +65,19 @@ function LoginForm() {
   }
 
   return (
-    <div>
+    <div className="anim-fade-up mx-auto w-full max-w-md">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+        <span className="grid size-11 place-items-center rounded-xl bg-navy-950 text-white shadow-lg shadow-navy-950/20">
+          <LogIn aria-hidden className="size-5" />
+        </span>
+        <h1 className="mt-5 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
           Sign in
         </h1>
-        <p className="mt-2 text-sm leading-relaxed text-slate-500">
-          Welcome back. Let&apos;s get you to work.
-        </p>
+        <p className="mt-1.5 text-sm text-slate-500">Welcome back. Let&apos;s get you to work.</p>
       </header>
 
       {(justVerified || justReset) && (
-        <div className="mt-6 space-y-3" role="status" aria-live="polite">
+        <div className="mt-5 space-y-3" role="status" aria-live="polite">
           {justVerified && (
             <Alert tone="success" title="Email confirmed">
               You can sign in now.
@@ -90,16 +92,25 @@ function LoginForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-8" noValidate>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="relative mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/5 sm:p-6"
+        noValidate
+      >
+        <div
+          aria-hidden
+          className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-600 via-violet-500 to-cyan-400"
+        />
+
         {formError && (
-          <div className="mb-6" role="alert">
+          <div className="mb-4" role="alert">
             <Alert tone="danger">
               <span>{formError}</span>
             </Alert>
           </div>
         )}
 
-        <div className="space-y-5">
+        <div className="space-y-4">
           <Input
             label="Email address"
             type="email"
@@ -131,13 +142,19 @@ function LoginForm() {
           </div>
         </div>
 
-        <Button type="submit" fullWidth size="lg" loading={isSubmitting} className="mt-8">
+        <Button type="submit" fullWidth size="lg" loading={isSubmitting} className="mt-5">
           Sign in
+          {!isSubmitting && <ArrowRight aria-hidden className="size-4" />}
         </Button>
+
+        <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-500">
+          <ShieldCheck aria-hidden className="size-3.5 text-slate-400" />
+          Your connection and password are handled securely.
+        </p>
       </form>
 
-      <footer className="mt-8 border-t border-slate-200 pt-6">
-        <p className="text-center text-sm text-slate-500">
+      <footer className="mt-5 text-center">
+        <p className="text-sm text-slate-500">
           Setting up a new company?{" "}
           <Link
             href="/signup"
