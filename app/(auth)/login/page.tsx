@@ -14,7 +14,10 @@ import { safeRedirectPath } from "@/lib/routes";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 const schema = z.object({
-  email: z.string().min(1, "Enter your email address.").email("Enter a valid email address."),
+  email: z
+    .string()
+    .min(1, "Enter your email address.")
+    .email("Enter a valid email address."),
   password: z.string().min(1, "Enter your password."),
 });
 
@@ -40,7 +43,10 @@ function LoginForm() {
 
     const parsed = schema.safeParse(values);
     if (!parsed.success) {
-      setFormError(parsed.error.issues[0]?.message ?? "Please check the details you entered.");
+      setFormError(
+        parsed.error.issues[0]?.message ??
+          "Please check the details you entered.",
+      );
       return;
     }
 
@@ -73,7 +79,9 @@ function LoginForm() {
         <h1 className="mt-5 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
           Sign in
         </h1>
-        <p className="mt-1.5 text-sm text-slate-500">Welcome back. Let&apos;s get you to work.</p>
+        <p className="mt-1.5 text-sm text-slate-500">
+          Welcome back. Let&apos;s get you to work.
+        </p>
       </header>
 
       {(justVerified || justReset) && (
@@ -142,7 +150,13 @@ function LoginForm() {
           </div>
         </div>
 
-        <Button type="submit" fullWidth size="lg" loading={isSubmitting} className="mt-5">
+        <Button
+          type="submit"
+          fullWidth
+          size="lg"
+          loading={isSubmitting}
+          className="mt-5"
+        >
           Sign in
           {!isSubmitting && <ArrowRight aria-hidden className="size-4" />}
         </Button>
