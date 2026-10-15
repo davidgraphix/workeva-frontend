@@ -15,7 +15,10 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 const schema = z
   .object({
     fullName: z.string().trim().min(2, "Enter your full name."),
-    email: z.string().min(1, "Enter your email address.").email("Enter a valid email address."),
+    email: z
+      .string()
+      .min(1, "Enter your email address.")
+      .email("Enter a valid email address."),
     password: z
       .string()
       .min(10, "Use at least 10 characters.")
@@ -33,7 +36,13 @@ type FormValues = z.infer<typeof schema>;
 
 const setupSteps = ["Create account", "Set up company", "Invite team"];
 const strengthLabels = ["", "Weak", "Fair", "Good", "Strong"];
-const strengthColors = ["bg-slate-200", "bg-red-500", "bg-amber-500", "bg-amber-400", "bg-emerald-500"];
+const strengthColors = [
+  "bg-slate-200",
+  "bg-red-500",
+  "bg-amber-500",
+  "bg-amber-400",
+  "bg-emerald-500",
+];
 
 /** Slim progress indicator for the overall setup flow. */
 function Progress() {
@@ -82,7 +91,10 @@ function PasswordChecklist({ password }: { password: string }) {
             />
           ))}
         </div>
-        <span className="w-11 text-right text-[11px] font-semibold text-slate-600" aria-live="polite">
+        <span
+          className="w-11 text-right text-[11px] font-semibold text-slate-600"
+          aria-live="polite"
+        >
           {started ? strengthLabels[score] : ""}
         </span>
       </div>
@@ -97,7 +109,9 @@ function PasswordChecklist({ password }: { password: string }) {
             <span
               aria-hidden
               className={`grid size-3.5 place-items-center rounded-full transition-colors duration-300 ${
-                ok ? "bg-success-600 text-white" : "border border-slate-300 bg-white"
+                ok
+                  ? "bg-success-600 text-white"
+                  : "border border-slate-300 bg-white"
               }`}
             >
               {ok && <Check className="size-2.5" strokeWidth={3} />}
@@ -122,7 +136,12 @@ export default function SignUpPage() {
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    defaultValues: { fullName: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
   const password = watch("password") ?? "";
@@ -180,7 +199,9 @@ export default function SignUpPage() {
           </span>
         </div>
 
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Check your email</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+          Check your email
+        </h1>
 
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
           We&apos;ve sent a confirmation link to{" "}
@@ -191,8 +212,15 @@ export default function SignUpPage() {
         </p>
 
         <ol className="mt-5 space-y-2.5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-          {["Open the email from Workeva", "Select the confirmation link", "Set up your company"].map((step, i) => (
-            <li key={step} className="flex items-center gap-3 text-sm text-slate-700">
+          {[
+            "Open the email from Workeva",
+            "Select the confirmation link",
+            "Set up your company",
+          ].map((step, i) => (
+            <li
+              key={step}
+              className="flex items-center gap-3 text-sm text-slate-700"
+            >
               <span className="grid size-6 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
                 {i + 1}
               </span>
@@ -221,8 +249,12 @@ export default function SignUpPage() {
       <Progress />
 
       <header className="mt-5">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Create your account</h1>
-        <p className="mt-1.5 text-sm text-slate-500">You&apos;ll set up your company in the next step.</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+          Create your account
+        </h1>
+        <p className="mt-1.5 text-sm text-slate-500">
+          You&apos;ll set up your company in the next step.
+        </p>
       </header>
 
       <form
@@ -244,7 +276,7 @@ export default function SignUpPage() {
         )}
 
         <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 ">
             <Input
               label="Full name"
               autoComplete="name"
@@ -286,7 +318,13 @@ export default function SignUpPage() {
           <PasswordChecklist password={password} />
         </div>
 
-        <Button type="submit" fullWidth size="lg" loading={isSubmitting} className="mt-5">
+        <Button
+          type="submit"
+          fullWidth
+          size="lg"
+          loading={isSubmitting}
+          className="mt-5"
+        >
           Create account
           {!isSubmitting && <ArrowRight aria-hidden className="size-4" />}
         </Button>
@@ -308,7 +346,8 @@ export default function SignUpPage() {
           </Link>
         </p>
         <p className="text-xs leading-relaxed text-slate-500">
-          Invited by your employer? Open the link in your invitation email. It will put you in the right company.
+          Invited by your employer? Open the link in your invitation email. It
+          will put you in the right company.
         </p>
       </footer>
     </div>
