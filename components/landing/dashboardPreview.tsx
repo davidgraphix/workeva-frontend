@@ -47,12 +47,13 @@ function prefersReducedMotion() {
 function CountUp({ to, active, duration = 1400 }: { to: number; active: boolean; duration?: number }) {
   const [value, setValue] = useState(0);
 
+  // Someone who asked for less motion gets the final number straight away, derived rather
+  // than assigned from inside the effect - setting state synchronously there costs a second
+  // render pass and shows the intermediate value first.
+  const reducedMotion = prefersReducedMotion();
+
   useEffect(() => {
-    if (!active) return;
-    if (prefersReducedMotion()) {
-      setValue(to);
-      return;
-    }
+    if (!active || reducedMotion) return;
     let raf = 0;
     const start = performance.now();
     const tick = (now: number) => {
@@ -62,9 +63,9 @@ function CountUp({ to, active, duration = 1400 }: { to: number; active: boolean;
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [active, to, duration]);
+  }, [active, reducedMotion, to, duration]);
 
-  return <>{value}</>;
+  return <>{reducedMotion && active ? to : value}</>;
 }
 
 export function DashboardPreview() {

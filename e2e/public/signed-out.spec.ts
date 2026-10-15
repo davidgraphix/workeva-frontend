@@ -21,9 +21,13 @@ test.describe("route protection", () => {
     });
   }
 
-  test("the root redirects to sign-in", async ({ page }) => {
+  test("the root serves the public landing page without exposing the application", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveURL(/\/login/);
+
+    // The marketing page is deliberately public; what matters is that it is not the app.
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("link", { name: /sign in|log in/i }).first()).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
   });
 });
 
@@ -99,10 +103,12 @@ test.describe("signed-out pages", () => {
   });
 });
 
-test("an off-site next parameter is never followed", async ({ page }) => {
+test("an off-site next parameter is never followed", async ({ page, baseURL }) => {
   await page.goto("/login?next=//evil.example.com");
   // The login form itself renders; the redirect target is only used after a successful
   // sign-in and is sanitised by safeRedirectPath (unit tested).
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
-  await expect(page).toHaveURL(/localhost/);
+
+  // Still on this site, wherever this site happens to be.
+  expect(new URL(page.url()).origin).toBe(new URL(baseURL!).origin);
 });

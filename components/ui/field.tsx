@@ -7,7 +7,11 @@ import { cn } from "@/lib/utils";
 const controlClasses =
   "block w-full rounded-md border-0 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm " +
   "ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 " +
-  "focus:outline-none focus:ring-slate-500 " +
+  // No focus:outline-none here. It removed the keyboard focus indicator from every text
+  // field in the product: the ring below is a box-shadow, and a 1px slate-300 to slate-500
+  // change is not a visible indicator. The brand ring reads clearly for a mouse user, and
+  // the global :focus-visible outline in globals.css stays available for keyboard users.
+  "focus:ring-2 focus:ring-inset focus:ring-brand-600 " +
   "disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed";
 
 const errorClasses = "ring-danger-600 focus:ring-danger-600";
