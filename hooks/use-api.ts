@@ -133,6 +133,14 @@ export const queryKeys = {
   notificationPreferences: ["notifications", "preferences"] as const,
   audit: (filters?: unknown) => withFilters("audit", filters),
   reports: (kind: string, filters?: unknown) => withFilters("reports", kind, filters),
+  operationLocations: (filters?: unknown) => withFilters("operations", "locations", filters),
+  operationLocation: (id: string) => ["operations", "location", id] as const,
+  operationActivities: (locationId?: string) => withFilters("operations", "activities", locationId),
+  operationStaff: (filters?: unknown) => withFilters("operations", "staff", filters),
+  operationReports: (filters?: unknown) => withFilters("operations", "reports", filters),
+  operationReport: (id: string) => ["operations", "report", id] as const,
+  operationsDashboard: (date?: string) => ["operations", "dashboard", date ?? "today"] as const,
+  myOperationAssignments: ["operations", "my-assignments"] as const,
 };
 
 /**

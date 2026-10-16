@@ -29,6 +29,15 @@ export const Permission = {
   taskAssign: "task.assign",
   taskUpdate: "task.update",
 
+  operationsView: "operations.view",
+  operationsLocationManage: "operations.location.manage",
+  operationsStaffAssign: "operations.staff.assign",
+  operationsActivityManage: "operations.activity.manage",
+  operationsReportCreate: "operations.report.create",
+  operationsReportView: "operations.report.view",
+  operationsReportReview: "operations.report.review",
+  operationsReportExport: "operations.report.export",
+
   reportsView: "reports.view",
   settingsManage: "settings.manage",
   locationManage: "location.manage",

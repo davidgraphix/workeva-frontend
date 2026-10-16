@@ -609,3 +609,129 @@ export const notificationCategoryLabels: Record<NotificationCategory, string> = 
   [NotificationCategory.Task]: "Tasks",
   [NotificationCategory.System]: "System",
 };
+
+// ---------- Operations: field reporting ----------
+
+export type OperationLocationType =
+  | "Farm" | "ConstructionSite" | "Warehouse" | "Factory" | "Branch" | "FieldSales" | "Logistics" | "Other";
+
+/** Matches the backend enums, which serialise as numbers. */
+export enum OperationShift { Morning = 0, Evening = 1 }
+export enum OperationReportStatus { Submitted = 0, Approved = 1, Returned = 2 }
+export enum OperationAssignmentRole { Worker = 0, Supervisor = 1 }
+
+export interface OperationLocationResponse {
+  id: string;
+  name: string;
+  type: number;
+  typeLabel: string;
+  code: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  size: number | null;
+  sizeUnit: string | null;
+  notes: string | null;
+  isActive: boolean;
+  assignedStaffCount: number;
+  createdAt: string;
+}
+
+export interface OperationActivityResponse {
+  id: string;
+  name: string;
+  description: string | null;
+  unit: string;
+  operationLocationId: string | null;
+  operationLocationName: string | null;
+  isActive: boolean;
+}
+
+export interface OperationStaffAssignmentResponse {
+  id: string;
+  operationLocationId: string;
+  operationLocationName: string;
+  employeeId: string;
+  employeeName: string;
+  jobTitle: string | null;
+  role: OperationAssignmentRole;
+  isActive: boolean;
+  assignedAt: string;
+}
+
+export interface OperationReportLineResponse {
+  id: string;
+  activityId: string;
+  activityName: string;
+  quantity: number;
+  unit: string;
+  notes: string | null;
+}
+
+export interface OperationReportResponse {
+  id: string;
+  operationLocationId: string;
+  operationLocationName: string;
+  employeeId: string;
+  employeeName: string;
+  reportDate: string;
+  shift: OperationShift;
+  status: OperationReportStatus;
+  submittedAt: string;
+  notes: string | null;
+  reviewedByEmployeeId: string | null;
+  reviewedByName: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  canEdit: boolean;
+  canReview: boolean;
+  lines: OperationReportLineResponse[];
+}
+
+export interface OperationActivityTotal {
+  activityId: string;
+  activityName: string;
+  unit: string;
+  quantity: number;
+  reportCount: number;
+}
+
+export interface OperationLocationTotal {
+  operationLocationId: string;
+  name: string;
+  reportCount: number;
+  staffAssigned: number;
+  reportsToday: number;
+}
+
+export interface OperationsDashboardResponse {
+  date: string;
+  totalLocations: number;
+  activeLocations: number;
+  staffAssigned: number;
+  expectedReportsToday: number;
+  reportsToday: number;
+  missingReportsToday: number;
+  morningReportsToday: number;
+  eveningReportsToday: number;
+  pendingReview: number;
+  approvedToday: number;
+  returnedToday: number;
+  activityTotals: OperationActivityTotal[];
+  locationTotals: OperationLocationTotal[];
+  shiftBreakdown: { shift: OperationShift; count: number }[];
+}
+
+export interface MyOperationAssignmentResponse {
+  operationLocationId: string;
+  operationLocationName: string;
+  type: number;
+  address: string | null;
+  role: OperationAssignmentRole;
+  morningSubmitted: boolean;
+  eveningSubmitted: boolean;
+  morningReportId: string | null;
+  eveningReportId: string | null;
+  morningStatus: OperationReportStatus | null;
+  eveningStatus: OperationReportStatus | null;
+}

@@ -1,5 +1,9 @@
 import {
   CalendarDays,
+  FileText,
+  ListChecks,
+  MapPin,
+  Sprout,
   Building2,
   ClipboardList,
   Clock,
@@ -38,12 +42,17 @@ export const primaryNavigation: NavItem[] = [
   { href: "/my-attendance", label: "My attendance", icon: Clock, requiresEmployee: true, requires: [Permission.attendanceSelf] },
   { href: "/my-leave", label: "My leave", icon: CalendarDays, requiresEmployee: true, requires: [Permission.leaveRequest] },
   { href: "/my-tasks", label: "My tasks", icon: ClipboardList, requiresEmployee: true, requires: [Permission.taskView] },
+  { href: "/my-operations", label: "My operations", icon: Sprout, requiresEmployee: true, requires: [Permission.operationsReportCreate] },
 
   // Company-wide.
   { href: "/employees", label: "Employees", icon: Users, requires: [Permission.employeeCreate, Permission.employeeInvite, Permission.employeeUpdate] },
   { href: "/departments", label: "Departments", icon: Building2, requires: [Permission.departmentManage] },
   { href: "/attendance", label: "Attendance", icon: Clock, requires: [Permission.attendanceView, Permission.attendanceManage] },
   { href: "/leave", label: "Leave", icon: CalendarDays, requires: [Permission.leaveApprove, Permission.leaveManage] },
+  { href: "/operations", label: "Operations", icon: Sprout, requires: [Permission.operationsView] },
+  { href: "/operations/locations", label: "Locations", icon: MapPin, requires: [Permission.operationsLocationManage, Permission.operationsStaffAssign] },
+  { href: "/operations/activities", label: "Activities", icon: ListChecks, requires: [Permission.operationsActivityManage] },
+  { href: "/operations/reports", label: "Field reports", icon: FileText, requires: [Permission.operationsReportView] },
   { href: "/tasks", label: "Tasks", icon: ClipboardList, requires: [Permission.taskAssign, Permission.taskCreate] },
   { href: "/reports", label: "Reports", icon: FileBarChart, requires: [Permission.reportsView] },
   { href: "/audit", label: "Audit trail", icon: ShieldCheck, requires: [Permission.auditView] },
