@@ -22,7 +22,8 @@ const users = {
     user: { id: "00000000-0000-0000-0000-0000000000e1", email: "chiamaka.eze@acme-demo.test" },
     roleKey: "employee", roleName: "Employee", scope: 0, employeeId: "00000000-0000-0000-0000-0000000000e1",
     fullName: "Chiamaka Eze",
-    permissions: ["attendance.self", "attendance.view", "department.view", "employee.view", "leave.request", "leave.view", "task.create", "task.update", "task.view"],
+    permissions: ["attendance.self", "attendance.view", "department.view", "employee.view", "leave.request", "leave.view", "task.create", "task.update", "task.view",
+      "operations.view", "operations.report.create", "operations.report.view"],
   },
   "owner-token": {
     user: { id: "00000000-0000-0000-0000-0000000000a1", email: "ada.okonkwo@acme-demo.test" },
@@ -31,7 +32,10 @@ const users = {
     permissions: ["attendance.manage", "attendance.self", "attendance.view", "audit.view", "department.manage", "department.view",
       "employee.create", "employee.delete", "employee.invite", "employee.update", "employee.view", "leave.approve", "leave.manage",
       "leave.request", "leave.view", "location.manage", "reports.view", "role.manage", "settings.manage", "task.assign", "task.create",
-      "task.update", "task.view"],
+      "task.update", "task.view",
+      "operations.view", "operations.location.manage", "operations.staff.assign", "operations.activity.manage",
+      "operations.report.create", "operations.report.create_for_others", "operations.report.view",
+      "operations.report.review", "operations.report.export"],
   },
 };
 
@@ -99,6 +103,103 @@ function me(session) {
   };
 }
 
+
+// ---------- Operations (field reporting) fixtures ----------
+// Per-token state, so one test's submission cannot change another's expectations.
+const operationReportsBy = new Map();
+
+const operationLocations = [
+  { id: "f1", name: "North Farm", type: 0, typeLabel: "Farm", code: "NF-01", address: "Ikorodu Road", latitude: 6.43, longitude: 3.42,
+    size: 12.5, sizeUnit: "hectares", notes: null, isActive: true, assignedStaffCount: 4, createdAt: iso(now) },
+  { id: "f2", name: "South Farm", type: 0, typeLabel: "Farm", code: "SF-02", address: "Lekki", latitude: 6.44, longitude: 3.47,
+    size: 8, sizeUnit: "hectares", notes: null, isActive: true, assignedStaffCount: 2, createdAt: iso(now) },
+];
+
+const operationActivities = [
+  { id: "act-harvest", name: "Harvesting", description: null, unit: "kg", operationLocationId: null, operationLocationName: null, isActive: true },
+  { id: "act-weeding", name: "Weeding", description: null, unit: "hours", operationLocationId: null, operationLocationName: null, isActive: true },
+];
+
+const operationStaff = [
+  { id: "sa1", operationLocationId: "f1", operationLocationName: "North Farm", employeeId: "00000000-0000-0000-0000-0000000000e1",
+    employeeName: "Chiamaka Eze", jobTitle: "Field Officer", role: 0, isActive: true, assignedAt: iso(now) },
+];
+
+const baseOperationReport = {
+  id: "or-1", operationLocationId: "f1", operationLocationName: "North Farm",
+  employeeId: "00000000-0000-0000-0000-0000000000e1", employeeName: "Chiamaka Eze",
+  reportDate: plain(daysFromNow(-1)), shift: 0, status: 0, submittedAt: iso(daysFromNow(-1)),
+  notes: "Dry morning", reviewedByEmployeeId: null, reviewedByName: null, reviewedAt: null, reviewNote: null,
+  canEdit: false, canReview: false,
+  lines: [{ id: "orl-1", activityId: "act-harvest", activityName: "Harvesting", quantity: 120.5, unit: "kg", notes: null }],
+};
+
+function operationReportsFor(session, token) {
+  const own = session.roleKey === "employee";
+  const base = { ...baseOperationReport, canReview: !own && baseOperationReport.status === 0 };
+  // Keyed by token, not by employee: every test gets its own fixture state, so one
+  // test submitting a report cannot change what the next one sees.
+  return [base, ...(operationReportsBy.get(token) ?? [])];
+}
+
+function operationAssignments(token) {
+  const submitted = operationReportsBy.get(token) ?? [];
+  const todays = submitted.filter((r) => r.reportDate === plain(now));
+  const morning = todays.find((r) => r.shift === 0);
+  const evening = todays.find((r) => r.shift === 1);
+
+  return [
+    { operationLocationId: "f1", operationLocationName: "North Farm", type: 0, address: "Ikorodu Road", role: 0,
+      morningSubmitted: Boolean(morning), eveningSubmitted: Boolean(evening),
+      morningReportId: morning?.id ?? null, eveningReportId: evening?.id ?? null,
+      morningStatus: morning?.status ?? null, eveningStatus: evening?.status ?? null },
+  ];
+}
+
+function submitOperationReport(session, body, token) {
+  const activity = operationActivities.find((a) => a.id === body?.lines?.[0]?.activityId) ?? operationActivities[0];
+  const report = {
+    ...baseOperationReport,
+    id: `or-${Math.random().toString(36).slice(2, 8)}`,
+    employeeId: session.employeeId,
+    employeeName: session.fullName,
+    reportDate: body?.reportDate ?? plain(now),
+    shift: body?.shift ?? 0,
+    status: 0,
+    submittedAt: iso(new Date()),
+    notes: body?.notes ?? null,
+    lines: (body?.lines ?? []).map((line, index) => ({
+      id: `orl-${index}`,
+      activityId: line.activityId,
+      activityName: operationActivities.find((a) => a.id === line.activityId)?.name ?? activity.name,
+      quantity: line.quantity,
+      unit: operationActivities.find((a) => a.id === line.activityId)?.unit ?? activity.unit,
+      notes: line.notes ?? null,
+    })),
+  };
+
+  const existing = operationReportsBy.get(token) ?? [];
+  operationReportsBy.set(token, [report, ...existing]);
+  return report;
+}
+
+function operationsDashboard() {
+  return {
+    date: plain(now), totalLocations: 2, activeLocations: 2, staffAssigned: 4,
+    expectedReportsToday: 4, reportsToday: 3, missingReportsToday: 5,
+    morningReportsToday: 2, eveningReportsToday: 1, pendingReview: 1, approvedToday: 1, returnedToday: 0,
+    activityTotals: [
+      { activityId: "act-harvest", activityName: "Harvesting", unit: "kg", quantity: 340.5, reportCount: 2 },
+      { activityId: "act-weeding", activityName: "Weeding", unit: "hours", quantity: 6, reportCount: 1 },
+    ],
+    locationTotals: [
+      { operationLocationId: "f1", name: "North Farm", reportCount: 12, staffAssigned: 4, reportsToday: 2 },
+      { operationLocationId: "f2", name: "South Farm", reportCount: 4, staffAssigned: 2, reportsToday: 1 },
+    ],
+    shiftBreakdown: [{ shift: 0, count: 2 }, { shift: 1, count: 1 }],
+  };
+}
+
 function route(method, path, session, body, token) {
   const employee = employees.find((e) => e.id === session.employeeId);
   const routes = {
@@ -118,6 +219,18 @@ function route(method, path, session, body, token) {
     "GET /api/leave/types": () => balances.map((b) => ({ id: b.leaveTypeId, name: b.leaveTypeName, code: b.leaveTypeName.split(" ")[0].toLowerCase(), defaultAnnualDays: b.allocatedDays, enforceBalance: true, requiresApproval: true, isActive: true })),
     "GET /api/leave/calendar": () => [],
     "POST /api/leave/requests": () => ({ ...leaveRequests[0], id: "30000000-0000-0000-0000-000000000009", reason: body?.reason ?? "" }),
+    "GET /api/operations/my-assignments": () => operationAssignments(token),
+    "GET /api/operations/dashboard": () => operationsDashboard(),
+    "GET /api/operations/locations": () => paged(operationLocations),
+    "GET /api/operations/activities": () => operationActivities,
+    "GET /api/operations/staff": () => operationStaff,
+    "GET /api/operations/reports": () => paged(operationReportsFor(session, token)),
+    "GET /api/operations/reports/mine": () => paged(operationReportsFor(session, token)),
+    "POST /api/operations/reports": () => submitOperationReport(session, body, token),
+    "POST /api/operations/locations": () => ({ ...operationLocations[0], id: "f-new", name: body?.name ?? "New location", assignedStaffCount: 0 }),
+    "POST /api/operations/activities": () => ({ id: "act-new", name: body?.name ?? "New activity", description: body?.description ?? null, unit: body?.unit ?? "kg", operationLocationId: body?.operationLocationId ?? null, operationLocationName: null, isActive: true }),
+    "POST /api/operations/staff": () => ({ ...operationStaff[0], id: "sa-new", employeeId: body?.employeeId ?? operationStaff[0].employeeId, role: body?.role ?? 0 }),
+
     "GET /api/tasks": () => paged(tasks),
     "GET /api/tasks/summary": () => ({ total: 2, toDo: 1, inProgress: 1, completed: 0, cancelled: 0, overdue: 1, dueToday: 0 }),
     "GET /api/notifications": () => paged(notifications),

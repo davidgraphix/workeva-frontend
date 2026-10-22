@@ -172,7 +172,12 @@ export default function OperationReportsPage() {
                   <li key={report.id}>
                     <Card>
                       <CardBody className="py-3">
-                        <button type="button" className="w-full text-left" onClick={() => setOpen(report)}>
+                        <button
+                          type="button"
+                          className="w-full text-left"
+                          aria-label={`Open ${report.employeeName}'s ${shiftLabel(report.shift).toLowerCase()} report`}
+                          onClick={() => setOpen(report)}
+                        >
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <p className="text-sm font-medium text-slate-900">{report.employeeName}</p>

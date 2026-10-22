@@ -49,10 +49,12 @@ export const primaryNavigation: NavItem[] = [
   { href: "/departments", label: "Departments", icon: Building2, requires: [Permission.departmentManage] },
   { href: "/attendance", label: "Attendance", icon: Clock, requires: [Permission.attendanceView, Permission.attendanceManage] },
   { href: "/leave", label: "Leave", icon: CalendarDays, requires: [Permission.leaveApprove, Permission.leaveManage] },
-  { href: "/operations", label: "Operations", icon: Sprout, requires: [Permission.operationsView] },
+  { href: "/operations", label: "Operations", icon: Sprout, requires: [Permission.operationsReportReview, Permission.operationsLocationManage, Permission.operationsReportExport] },
   { href: "/operations/locations", label: "Locations", icon: MapPin, requires: [Permission.operationsLocationManage, Permission.operationsStaffAssign] },
   { href: "/operations/activities", label: "Activities", icon: ListChecks, requires: [Permission.operationsActivityManage] },
-  { href: "/operations/reports", label: "Field reports", icon: FileText, requires: [Permission.operationsReportView] },
+  // Oversight, not personal reporting: an employee files theirs under My operations, and
+  // operations.report.view alone is scope-limited to themselves anyway.
+  { href: "/operations/reports", label: "Field reports", icon: FileText, requires: [Permission.operationsReportReview, Permission.operationsReportExport] },
   { href: "/tasks", label: "Tasks", icon: ClipboardList, requires: [Permission.taskAssign, Permission.taskCreate] },
   { href: "/reports", label: "Reports", icon: FileBarChart, requires: [Permission.reportsView] },
   { href: "/audit", label: "Audit trail", icon: ShieldCheck, requires: [Permission.auditView] },

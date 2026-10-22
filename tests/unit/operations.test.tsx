@@ -106,7 +106,7 @@ describe("field report submission", () => {
 
     await waitFor(() => expect(hooks.submit.mutateAsync).toHaveBeenCalledTimes(1));
 
-    const body = hooks.submit.mutateAsync.mock.calls[0][0];
+    const body = hooks.submit.mutateAsync.mock.calls[0]![0];
     expect(body.operationLocationId).toBe("farm-1");
     expect(body.shift).toBe(OperationShift.Evening);
     expect(body.lines).toEqual([{ activityId: "harvest", quantity: 120.5, notes: null }]);
@@ -145,9 +145,9 @@ describe("field report submission", () => {
     await userEvent.click(screen.getByRole("button", { name: /add another activity/i }));
 
     const activitySelects = screen.getAllByLabelText("What was done");
-    await userEvent.selectOptions(activitySelects[1], "harvest");
+    await userEvent.selectOptions(activitySelects[1]!, "harvest");
     const quantities = screen.getAllByLabelText(/How much/);
-    await userEvent.type(quantities[1], "5");
+    await userEvent.type(quantities[1]!, "5");
 
     await userEvent.click(screen.getByRole("button", { name: "Submit report" }));
 
