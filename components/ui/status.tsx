@@ -6,11 +6,15 @@ import {
   LeaveStatus,
   TaskPriority,
   TaskStatus,
+  ProjectStatus,
+  ProjectMemberRole,
   attendanceStatusLabels,
   employeeStatusLabels,
   leaveStatusLabels,
   taskPriorityLabels,
   taskStatusLabels,
+  projectStatusLabels,
+  projectMemberRoleLabels,
 } from "@/lib/types";
 import { Badge, StatusDot } from "./surfaces";
 
@@ -97,4 +101,97 @@ export function TaskPriorityBadge({ priority }: { priority: TaskPriority }) {
 
 export function OverdueBadge() {
   return <Badge tone="danger">Overdue</Badge>;
+}
+
+// ---------- M2: projects ----------
+
+export function ProjectStatusBadge({ status }: { status: ProjectStatus }) {
+  const tones = {
+    [ProjectStatus.Planning]: "neutral",
+    [ProjectStatus.Active]: "info",
+    // On hold is a warning rather than neutral: a paused project with a deadline is not
+    // progressing towards it, and the dashboard treats it as at risk for that reason.
+    [ProjectStatus.OnHold]: "warning",
+    [ProjectStatus.Completed]: "success",
+    [ProjectStatus.Cancelled]: "neutral",
+  } as const;
+
+  return (
+    <Badge tone={tones[status]} icon={<StatusDot tone={tones[status]} />}>
+      {projectStatusLabels[status]}
+    </Badge>
+  );
+}
+
+export function ProjectMemberRoleBadge({ role }: { role: ProjectMemberRole }) {
+  const tones = {
+    [ProjectMemberRole.Member]: "neutral",
+    [ProjectMemberRole.Lead]: "info",
+    [ProjectMemberRole.Viewer]: "neutral",
+  } as const;
+
+  return <Badge tone={tones[role]}>{projectMemberRoleLabels[role]}</Badge>;
+}
+
+/**
+ * At risk, not yet overdue. Shown instead of nothing when a project is heading for trouble
+ * while there is still time to act - which is the only warning worth having.
+ */
+export function AtRiskBadge() {
+  return <Badge tone="warning">At risk</Badge>;
+}
+
+export function BlockedBadge({ count }: { count?: number }) {
+  return (
+    <Badge tone="warning">
+      {count && count > 1 ? `Blocked by ${count}` : "Blocked"}
+    </Badge>
+  );
+}
+
+/**
+ * A progress bar that states its own value in words as well as in width.
+ *
+ * `role="progressbar"` with the aria value attributes, because a bar whose only output is a
+ * number of pixels tells a screen reader nothing. The percentage is also rendered as text, so
+ * it survives a stylesheet that does not load.
+ */
+export function ProgressBar({
+  value,
+  label,
+  tone = "info",
+  className,
+}: {
+  value: number;
+  label?: string;
+  tone?: "info" | "success" | "warning" | "danger";
+  className?: string;
+}) {
+  const clamped = Math.max(0, Math.min(100, Math.round(value)));
+
+  const fills = {
+    info: "bg-brand-600",
+    success: "bg-success-600",
+    warning: "bg-warning-600",
+    danger: "bg-danger-600",
+  } as const;
+
+  return (
+    <div className={className}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs text-slate-500">{label ?? "Progress"}</span>
+        <span className="numeric text-xs font-medium text-slate-700">{clamped}%</span>
+      </div>
+      <div
+        role="progressbar"
+        aria-valuenow={clamped}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={label ?? "Progress"}
+        className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100"
+      >
+        <div className={`h-full rounded-full ${fills[tone]}`} style={{ width: `${clamped}%` }} />
+      </div>
+    </div>
+  );
 }

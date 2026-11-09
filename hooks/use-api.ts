@@ -141,6 +141,19 @@ export const queryKeys = {
   operationReport: (id: string) => ["operations", "report", id] as const,
   operationsDashboard: (date?: string) => ["operations", "dashboard", date ?? "today"] as const,
   myOperationAssignments: ["operations", "my-assignments"] as const,
+
+  // M2: projects and advanced work management.
+  projects: (filters?: unknown) => withFilters("projects", filters),
+  project: (id: string) => ["project", id] as const,
+  projectDashboard: () => ["project-dashboard"] as const,
+  projectMembers: (key: string) => ["project-members", key] as const,
+  projectActivity: (key: string) => ["project-activity", key] as const,
+  taskActivity: (id: string) => ["task-activity", id] as const,
+  taskChecklist: (id: string) => ["task-checklist", id] as const,
+  taskComments: (id: string) => ["task-comments", id] as const,
+  taskDependencies: (id: string) => ["task-dependencies", id] as const,
+  taskAttachments: (id: string) => ["task-attachments", id] as const,
+  escalationRules: () => ["escalation-rules"] as const,
 };
 
 /**

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { Check, LocateFixed, MapPin, Pencil, Plus } from "lucide-react";
 
 import { NoAccess, PageHeader } from "@/components/app/page-header";
+import { EscalationSection } from "@/components/features/escalation";
 import { useSession } from "@/components/session-provider";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
@@ -35,7 +36,7 @@ import { cn, requestLocation } from "@/lib/utils";
 
 const TIMEZONES = ["Africa/Lagos", "Africa/Accra", "Africa/Nairobi", "Africa/Johannesburg", "Africa/Cairo", "Africa/Casablanca", "Africa/Kigali", "Europe/London", "UTC"];
 
-type Section = "company" | "attendance" | "locations" | "leave" | "roles";
+type Section = "company" | "attendance" | "locations" | "leave" | "roles" | "escalation";
 
 export default function SettingsPage() {
   const { can } = useSession();
@@ -46,6 +47,7 @@ export default function SettingsPage() {
     ["locations", "Work locations", can(Permission.locationManage)],
     ["leave", "Leave types", can(Permission.leaveManage)],
     ["roles", "Roles & members", can(Permission.roleManage)],
+    ["escalation", "Overdue escalation", can(Permission.projectEscalationManage)],
   ] as const).filter(([, , allowed]) => allowed);
 
   const [section, setSection] = useState<Section>(sections[0]?.[0] ?? "company");
@@ -75,6 +77,7 @@ export default function SettingsPage() {
           {section === "locations" && <LocationsSection />}
           {section === "leave" && <LeaveTypesSection />}
           {section === "roles" && <RolesSection />}
+          {section === "escalation" && <EscalationSection />}
         </div>
       </div>
     </>

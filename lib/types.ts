@@ -413,7 +413,7 @@ export interface LeaveCalendarEntry {
 
 // ---------- Tasks ----------
 
-export interface TaskResponse {
+export interface TaskResponse extends TaskProjectFields {
   id: string;
   title: string;
   description: string | null;
@@ -431,6 +431,32 @@ export interface TaskResponse {
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * M2 additions to a task. Every one is optional or defaulted on the wire, so a response from a
+ * company that has never turned projects on parses exactly as it did before - which is the same
+ * promise the backend contract makes.
+ */
+export interface TaskProjectFields {
+  projectId: string | null;
+  projectName: string | null;
+  teamId: string | null;
+  teamName: string | null;
+  parentTaskId: string | null;
+  startDate: string | null;
+  progressPercent: number;
+  subtaskCount: number;
+  completedSubtaskCount: number;
+  checklistCount: number;
+  completedChecklistCount: number;
+  commentCount: number;
+  attachmentCount: number;
+  additionalAssigneeCount: number;
+  blockedByCount: number;
+  blockingCount: number;
+  /** True when something this task depends on is not finished yet. */
+  isBlocked: boolean;
 }
 
 export interface TaskSummaryResponse {
@@ -735,3 +761,241 @@ export interface MyOperationAssignmentResponse {
   morningStatus: OperationReportStatus | null;
   eveningStatus: OperationReportStatus | null;
 }
+
+// ---------- M2: projects and advanced work management ----------
+
+export enum ProjectStatus {
+  Planning = 0,
+  Active = 1,
+  OnHold = 2,
+  Completed = 3,
+  Cancelled = 4,
+}
+
+export enum ProjectMemberRole {
+  Member = 0,
+  Lead = 1,
+  Viewer = 2,
+}
+
+export enum EscalationTarget {
+  Assignee = 0,
+  LineManager = 1,
+  ProjectManager = 2,
+  ProjectOwner = 3,
+  Role = 4,
+}
+
+export interface ProjectResponse {
+  id: string;
+  name: string;
+  code: string | null;
+  description: string | null;
+  status: ProjectStatus;
+  priority: TaskPriority;
+  startDate: string | null;
+  dueDate: string | null;
+  completedAt: string | null;
+  ownerEmployeeId: string;
+  ownerName: string;
+  ownerPhotoUrl: string | null;
+  managerEmployeeId: string | null;
+  managerName: string | null;
+  departmentId: string | null;
+  departmentName: string | null;
+  branchId: string | null;
+  branchName: string | null;
+  teamId: string | null;
+  teamName: string | null;
+  isArchived: boolean;
+  progressPercent: number;
+  taskCount: number;
+  completedTaskCount: number;
+  overdueTaskCount: number;
+  memberCount: number;
+  isOverdue: boolean;
+  isAtRisk: boolean;
+  /** True when the caller reaches this project through a membership row. */
+  isMember: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectMemberResponse {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  photoUrl: string | null;
+  jobTitle: string | null;
+  departmentId: string | null;
+  departmentName: string | null;
+  role: ProjectMemberRole;
+  isActive: boolean;
+  addedAt: string;
+  openTaskCount: number;
+  overdueTaskCount: number;
+}
+
+export interface ProjectActivityResponse {
+  id: string;
+  projectId: string;
+  taskId: string | null;
+  taskTitle: string | null;
+  actorEmployeeId: string | null;
+  actorName: string | null;
+  kind: string;
+  summary: string;
+  createdAt: string;
+}
+
+export interface ChecklistItemResponse {
+  id: string;
+  taskId: string;
+  title: string;
+  position: number;
+  isDone: boolean;
+  completedAt: string | null;
+  completedByEmployeeId: string | null;
+}
+
+export interface TaskCommentResponse {
+  id: string;
+  taskId: string;
+  authorEmployeeId: string;
+  authorName: string;
+  authorPhotoUrl: string | null;
+  body: string;
+  createdAt: string;
+  editedAt: string | null;
+  /** True when the caller wrote it, so the UI knows whether to offer an edit. */
+  isMine: boolean;
+}
+
+export interface TaskDependencyResponse {
+  id: string;
+  taskId: string;
+  dependsOnTaskId: string;
+  dependsOnTitle: string;
+  dependsOnStatus: TaskStatus;
+  dependsOnDueDate: string | null;
+  /** True while the blocker is still open, which is what makes this task blocked. */
+  isBlocking: boolean;
+}
+
+export interface TaskAttachmentResponse {
+  id: string;
+  taskId: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  uploadedByEmployeeId: string;
+  uploadedByName: string;
+  isUploaded: boolean;
+  createdAt: string;
+}
+
+export interface AttachmentUploadTicketResponse {
+  attachmentId: string;
+  uploadUrl: string;
+  method: string;
+  headers: Record<string, string>;
+  expiresAt: string;
+}
+
+export interface AttachmentDownloadResponse {
+  downloadUrl: string;
+  expiresAt: string;
+}
+
+export interface EscalationRuleResponse {
+  id: string;
+  daysOverdue: number;
+  target: EscalationTarget;
+  targetRoleKey: string | null;
+  isActive: boolean;
+  /** True when this rung is the built-in default rather than a row the organization wrote. */
+  isDefault: boolean;
+}
+
+export interface TeamWorkloadItem {
+  employeeId: string;
+  employeeName: string;
+  photoUrl: string | null;
+  teamId: string | null;
+  teamName: string | null;
+  openTaskCount: number;
+  overdueTaskCount: number;
+  projectCount: number;
+}
+
+export interface ProjectProgressItem {
+  projectId: string;
+  name: string;
+  status: ProjectStatus;
+  progressPercent: number;
+  taskCount: number;
+  completedTaskCount: number;
+  overdueTaskCount: number;
+  dueDate: string | null;
+  isOverdue: boolean;
+  isAtRisk: boolean;
+}
+
+export interface ProjectDashboardResponse {
+  totalProjects: number;
+  activeProjects: number;
+  completedProjects: number;
+  atRiskProjects: number;
+  overdueProjects: number;
+  totalTasks: number;
+  completedTasks: number;
+  overdueTasks: number;
+  teamWorkload: TeamWorkloadItem[];
+  projectProgress: ProjectProgressItem[];
+  recentActivity: ProjectActivityResponse[];
+}
+
+export const projectStatusLabels: Record<ProjectStatus, string> = {
+  [ProjectStatus.Planning]: "Planning",
+  [ProjectStatus.Active]: "Active",
+  [ProjectStatus.OnHold]: "On hold",
+  [ProjectStatus.Completed]: "Completed",
+  [ProjectStatus.Cancelled]: "Cancelled",
+};
+
+export const projectMemberRoleLabels: Record<ProjectMemberRole, string> = {
+  [ProjectMemberRole.Member]: "Member",
+  [ProjectMemberRole.Lead]: "Lead",
+  [ProjectMemberRole.Viewer]: "Viewer",
+};
+
+export const escalationTargetLabels: Record<EscalationTarget, string> = {
+  [EscalationTarget.Assignee]: "The assignee",
+  [EscalationTarget.LineManager]: "Their line manager",
+  [EscalationTarget.ProjectManager]: "The project manager",
+  [EscalationTarget.ProjectOwner]: "The project owner",
+  [EscalationTarget.Role]: "A named role",
+};
+
+/**
+ * Plain-language labels for the activity feed's stable kind keys. An unknown kind - one written
+ * by a newer backend than this build - falls back to the summary the server already wrote, which
+ * is why the feed carries a written summary rather than only a key.
+ */
+export const projectActivityLabels: Record<string, string> = {
+  project_created: "Project created",
+  project_updated: "Project updated",
+  status_changed: "Status changed",
+  archived: "Archived",
+  restored: "Restored",
+  member_added: "Member added",
+  member_removed: "Member removed",
+  task_added: "Task added",
+  task_status_changed: "Task status changed",
+  task_reassigned: "Task reassigned",
+  task_progress_changed: "Progress updated",
+  task_commented: "Comment added",
+  task_attachment_added: "File attached",
+  task_dependency_added: "Dependency added",
+  task_escalated: "Escalated",
+};

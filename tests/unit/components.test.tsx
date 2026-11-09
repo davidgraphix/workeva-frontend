@@ -177,7 +177,14 @@ describe("TaskList", async () => {
     id: "t1", title: "Prepare report", description: null, createdByEmployeeId: "mgr", createdByName: "Manager",
     assigneeEmployeeId: "emp-me", assigneeName: "Me", assigneePhotoUrl: null, departmentId: null, departmentName: null,
     priority: TaskPriority.High, status: TaskStatus.ToDo, dueDate: "2026-09-10", isOverdue: true, completedAt: null,
-    createdAt: "2026-09-01T00:00:00Z", updatedAt: "2026-09-01T00:00:00Z", ...overrides,
+    createdAt: "2026-09-01T00:00:00Z", updatedAt: "2026-09-01T00:00:00Z",
+    // The M2 fields, as the API sends them for a task with no project: present, and empty. A
+    // company that has never turned projects on gets exactly this shape.
+    projectId: null, projectName: null, teamId: null, teamName: null, parentTaskId: null,
+    startDate: null, progressPercent: 0, subtaskCount: 0, completedSubtaskCount: 0,
+    checklistCount: 0, completedChecklistCount: 0, commentCount: 0, attachmentCount: 0,
+    additionalAssigneeCount: 0, blockedByCount: 0, blockingCount: 0, isBlocked: false,
+    ...overrides,
   });
 
   it("lets the assignee start and then complete their task", async () => {

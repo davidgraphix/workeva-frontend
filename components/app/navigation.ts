@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Clock,
   FileBarChart,
+  FolderKanban,
   LayoutDashboard,
   Bell,
   Settings,
@@ -56,6 +57,11 @@ export const primaryNavigation: NavItem[] = [
   // operations.report.view alone is scope-limited to themselves anyway.
   { href: "/operations/reports", label: "Field reports", icon: FileText, requires: [Permission.operationsReportReview, Permission.operationsReportExport] },
   { href: "/tasks", label: "Tasks", icon: ClipboardList, requires: [Permission.taskAssign, Permission.taskCreate] },
+  // Projects sits above tasks, and is shown to anybody who can see one - which, for an ordinary
+  // employee, means the projects they have been added to. The page itself is empty and says so
+  // when they are on none, rather than the menu item disappearing and reappearing as they are
+  // added to work.
+  { href: "/projects", label: "Projects", icon: FolderKanban, requires: [Permission.projectView] },
   { href: "/reports", label: "Reports", icon: FileBarChart, requires: [Permission.reportsView] },
   { href: "/audit", label: "Audit trail", icon: ShieldCheck, requires: [Permission.auditView] },
 ];

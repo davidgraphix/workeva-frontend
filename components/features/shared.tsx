@@ -375,7 +375,18 @@ function TaskRow({ task, showAssignee, onEdit }: { task: TaskResponse; showAssig
   );
 }
 
-export function TaskDialog({ open, onClose, task }: { open: boolean; onClose: () => void; task?: TaskResponse | null }) {
+export function TaskDialog({
+  open,
+  onClose,
+  task,
+  projectId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  task?: TaskResponse | null;
+  /** Files the new task onto this project. Set when the dialog is opened from a project page. */
+  projectId?: string;
+}) {
   const save = useSaveTask();
   const update = useUpdateTaskStatus();
   const toast = useToast();
@@ -429,6 +440,9 @@ export function TaskDialog({ open, onClose, task }: { open: boolean; onClose: ()
                 departmentId: values.departmentId || null,
                 priority: Number(values.priority),
                 dueDate: values.dueDate || null,
+                // Only sent when there is one. A V1 task has no project, and sending a null
+                // would be indistinguishable from asking to clear it.
+                ...(projectId ?? task?.projectId ? { projectId: projectId ?? task?.projectId } : {}),
               },
             });
             if (task && Number(values.status) !== task.status) {

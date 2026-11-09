@@ -396,6 +396,14 @@ export interface TaskFilters {
   priority?: TaskPriority;
   onlyMine?: boolean;
   onlyOverdue?: boolean;
+
+  // M2 filters. Absent means "no constraint", exactly as the V1 filters do - so a page that
+  // never sets them gets the list it always got.
+  projectId?: string;
+  teamId?: string;
+  parentTaskId?: string;
+  onlyTopLevel?: boolean;
+
   page?: number;
   pageSize?: number;
 }
