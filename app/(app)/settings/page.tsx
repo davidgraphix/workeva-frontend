@@ -59,7 +59,10 @@ export default function SettingsPage() {
       <PageHeader title="Settings" description="Configure how Workeva works for your company." />
       <div className="grid gap-5 lg:grid-cols-[14rem_1fr]">
         <nav aria-label="Settings sections">
-          <ul className="flex gap-1 overflow-x-auto lg:flex-col">
+          {/* Wraps at phone width rather than scrolling sideways. As a horizontal scroller the
+              last section sat half off-screen and was effectively unreachable on a 375px display,
+              which only became obvious once there were six of them. */}
+          <ul className="flex flex-wrap gap-1 lg:flex-col lg:flex-nowrap">
             {sections.map(([key, label]) => (
               <li key={key}>
                 <button type="button" onClick={() => setSection(key)} aria-current={section === key ? "page" : undefined}

@@ -167,7 +167,10 @@ export function ProgressBar({
   tone?: "info" | "success" | "warning" | "danger";
   className?: string;
 }) {
-  const clamped = Math.max(0, Math.min(100, Math.round(value)));
+  // Clamped and guarded against a non-finite value. A bar is rendered from whatever the API
+  // sent, and `width: NaN%` with `aria-valuenow="NaN"` is a broken bar plus a broken
+  // announcement - worse than showing nothing done.
+  const clamped = Number.isFinite(value) ? Math.max(0, Math.min(100, Math.round(value))) : 0;
 
   const fills = {
     info: "bg-brand-600",

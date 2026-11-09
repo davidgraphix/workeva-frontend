@@ -23,7 +23,9 @@ const users = {
     roleKey: "employee", roleName: "Employee", scope: 0, employeeId: "00000000-0000-0000-0000-0000000000e1",
     fullName: "Chiamaka Eze",
     permissions: ["attendance.self", "attendance.view", "department.view", "employee.view", "leave.request", "leave.view", "task.create", "task.update", "task.view",
-      "operations.view", "operations.report.create", "operations.report.view"],
+      "operations.view", "operations.report.create", "operations.report.view",
+      // M2: an ordinary employee sees the projects they are on and can take part in their tasks.
+      "project.view", "task.comment", "task.attach"],
   },
   "owner-token": {
     user: { id: "00000000-0000-0000-0000-0000000000a1", email: "ada.okonkwo@acme-demo.test" },
@@ -35,7 +37,11 @@ const users = {
       "task.update", "task.view",
       "operations.view", "operations.location.manage", "operations.staff.assign", "operations.activity.manage",
       "operations.report.create", "operations.report.create_for_others", "operations.report.view",
-      "operations.report.review", "operations.report.export"],
+      "operations.report.review", "operations.report.export",
+      // M2: the owner runs the portfolio and sets the escalation ladder.
+      "project.view", "project.create", "project.update", "project.archive",
+      "project.member.manage", "project.escalation.manage",
+      "task.comment", "task.attach", "task.dependency.manage"],
   },
 };
 
@@ -200,7 +206,112 @@ function operationsDashboard() {
   };
 }
 
-function route(method, path, session, body, token) {
+// ---------- M2: projects and advanced work management fixtures ----------
+//
+// The M2 fields are present on every task here, exactly as the API sends them, so the e2e
+// build exercises the shape a real response has rather than a trimmed one.
+
+const taskExtras = {
+  projectId: null, projectName: null, teamId: null, teamName: null, parentTaskId: null,
+  startDate: null, progressPercent: 0, subtaskCount: 0, completedSubtaskCount: 0,
+  checklistCount: 0, completedChecklistCount: 0, commentCount: 0, attachmentCount: 0,
+  additionalAssigneeCount: 0, blockedByCount: 0, blockingCount: 0, isBlocked: false,
+};
+
+const PROJECT_ID = "40000000-0000-0000-0000-000000000001";
+const AT_RISK_ID = "40000000-0000-0000-0000-000000000002";
+
+const projects = [
+  {
+    id: PROJECT_ID, name: "Warehouse rollout", code: "WH-1",
+    description: "Open the Ikeja warehouse and move inventory across.",
+    status: 1, priority: 2,
+    startDate: plain(daysFromNow(-20)), dueDate: plain(daysFromNow(14)), completedAt: null,
+    ownerEmployeeId: "m1", ownerName: "Ibrahim Bello", ownerPhotoUrl: null,
+    managerEmployeeId: null, managerName: null,
+    departmentId: "d1", departmentName: "Engineering",
+    branchId: null, branchName: null, teamId: null, teamName: null,
+    isArchived: false, progressPercent: 45, taskCount: 4, completedTaskCount: 1,
+    overdueTaskCount: 0, memberCount: 3, isOverdue: false, isAtRisk: false, isMember: true,
+    createdAt: iso(daysFromNow(-20)), updatedAt: iso(daysFromNow(-1)),
+  },
+  {
+    id: AT_RISK_ID, name: "Payroll migration", code: "PAY-2",
+    description: "Move payroll onto the new provider before the quarter closes.",
+    status: 1, priority: 3,
+    startDate: plain(daysFromNow(-30)), dueDate: plain(daysFromNow(5)), completedAt: null,
+    ownerEmployeeId: "m1", ownerName: "Ibrahim Bello", ownerPhotoUrl: null,
+    managerEmployeeId: null, managerName: null,
+    departmentId: "d1", departmentName: "Engineering",
+    branchId: null, branchName: null, teamId: null, teamName: null,
+    isArchived: false, progressPercent: 20, taskCount: 3, completedTaskCount: 0,
+    overdueTaskCount: 2, memberCount: 2, isOverdue: false, isAtRisk: true, isMember: true,
+    createdAt: iso(daysFromNow(-30)), updatedAt: iso(daysFromNow(-2)),
+  },
+];
+
+const projectTasks = [
+  { ...tasks[0], ...taskExtras, id: "50000000-0000-0000-0000-000000000001",
+    title: "Survey the Ikeja site", projectId: PROJECT_ID, projectName: "Warehouse rollout",
+    status: 2, progressPercent: 100, checklistCount: 2, completedChecklistCount: 2, commentCount: 1 },
+  { ...tasks[0], ...taskExtras, id: "50000000-0000-0000-0000-000000000002",
+    title: "Fit out the racking", projectId: PROJECT_ID, projectName: "Warehouse rollout",
+    status: 1, progressPercent: 40, subtaskCount: 1, completedSubtaskCount: 0, commentCount: 2,
+    isBlocked: true, blockedByCount: 1 },
+  { ...tasks[0], ...taskExtras, id: "50000000-0000-0000-0000-000000000003",
+    title: "Order the shelving", projectId: PROJECT_ID, projectName: "Warehouse rollout",
+    parentTaskId: "50000000-0000-0000-0000-000000000002", status: 0, progressPercent: 0 },
+  { ...tasks[0], ...taskExtras, id: "50000000-0000-0000-0000-000000000004",
+    title: "Move the first pallets", projectId: PROJECT_ID, projectName: "Warehouse rollout",
+    status: 0, progressPercent: 0, dueDate: plain(daysFromNow(10)) },
+];
+
+const projectMembers = [
+  { id: "pm1", employeeId: "m1", employeeName: "Ibrahim Bello", photoUrl: null, jobTitle: "Operations Lead",
+    departmentId: "d1", departmentName: "Engineering", role: 1, isActive: true,
+    addedAt: iso(daysFromNow(-20)), openTaskCount: 2, overdueTaskCount: 0 },
+  { id: "pm2", employeeId: "e1", employeeName: "Chiamaka Eze", photoUrl: null, jobTitle: "Engineer",
+    departmentId: "d1", departmentName: "Engineering", role: 0, isActive: true,
+    addedAt: iso(daysFromNow(-15)), openTaskCount: 1, overdueTaskCount: 1 },
+];
+
+const projectActivity = [
+  { id: "pa1", projectId: PROJECT_ID, taskId: null, taskTitle: null, actorEmployeeId: "m1",
+    actorName: "Ibrahim Bello", kind: "status_changed",
+    summary: "Status changed from planning to active.", createdAt: iso(daysFromNow(-1)) },
+  { id: "pa2", projectId: PROJECT_ID, taskId: "50000000-0000-0000-0000-000000000002",
+    taskTitle: "Fit out the racking", actorEmployeeId: null, actorName: null, kind: "task_escalated",
+    summary: "\"Fit out the racking\" is 2 days overdue and was escalated to the line manager.",
+    createdAt: iso(daysFromNow(-2)) },
+];
+
+const projectDashboard = {
+  totalProjects: 2, activeProjects: 2, completedProjects: 0, atRiskProjects: 1, overdueProjects: 0,
+  totalTasks: 7, completedTasks: 1, overdueTasks: 2,
+  teamWorkload: [
+    { employeeId: "e1", employeeName: "Chiamaka Eze", photoUrl: null, teamId: null, teamName: null,
+      openTaskCount: 3, overdueTaskCount: 2, projectCount: 2 },
+    { employeeId: "m1", employeeName: "Ibrahim Bello", photoUrl: null, teamId: null, teamName: null,
+      openTaskCount: 2, overdueTaskCount: 0, projectCount: 1 },
+  ],
+  projectProgress: projects.map((p) => ({
+    projectId: p.id, name: p.name, status: p.status, progressPercent: p.progressPercent,
+    taskCount: p.taskCount, completedTaskCount: p.completedTaskCount,
+    overdueTaskCount: p.overdueTaskCount, dueDate: p.dueDate,
+    isOverdue: p.isOverdue, isAtRisk: p.isAtRisk,
+  })),
+  recentActivity: projectActivity,
+};
+
+const escalationRules = [
+  { id: "00000000-0000-0000-0000-000000000000", daysOverdue: 1, target: 0, targetRoleKey: null, isActive: true, isDefault: true },
+  { id: "00000000-0000-0000-0000-000000000000", daysOverdue: 2, target: 1, targetRoleKey: null, isActive: true, isDefault: true },
+  { id: "00000000-0000-0000-0000-000000000000", daysOverdue: 3, target: 2, targetRoleKey: null, isActive: true, isDefault: true },
+  { id: "00000000-0000-0000-0000-000000000000", daysOverdue: 5, target: 4, targetRoleKey: "hr_admin", isActive: true, isDefault: true },
+];
+// `query` is the request URL's search params. The project page asks the V1 task endpoint for
+// one project's tasks, so the fixture has to see the filter rather than only the path.
+function route(method, path, session, body, token, query) {
   const employee = employees.find((e) => e.id === session.employeeId);
   const routes = {
     "GET /api/me": () => me(session),
@@ -231,8 +342,13 @@ function route(method, path, session, body, token) {
     "POST /api/operations/activities": () => ({ id: "act-new", name: body?.name ?? "New activity", description: body?.description ?? null, unit: body?.unit ?? "kg", operationLocationId: body?.operationLocationId ?? null, operationLocationName: null, isActive: true }),
     "POST /api/operations/staff": () => ({ ...operationStaff[0], id: "sa-new", employeeId: body?.employeeId ?? operationStaff[0].employeeId, role: body?.role ?? 0 }),
 
-    "GET /api/tasks": () => paged(tasks),
+    "GET /api/tasks": () => paged(tasks.map((t) => ({ ...taskExtras, ...t }))),
     "GET /api/tasks/summary": () => ({ total: 2, toDo: 1, inProgress: 1, completed: 0, cancelled: 0, overdue: 1, dueToday: 0 }),
+
+    // M2: projects and advanced work management.
+    "GET /api/v2/projects": () => paged(projects),
+    "GET /api/v2/projects/dashboard": () => projectDashboard,
+    "GET /api/v2/escalation-rules": () => escalationRules,
     "GET /api/notifications": () => paged(notifications),
     "GET /api/notifications/unread-count": () => ({ count: 1 }),
     "GET /api/me/notification-preferences": () => [0, 1, 2, 3].map((category) => ({ category, inAppEnabled: true, emailEnabled: true })),
@@ -249,13 +365,67 @@ function route(method, path, session, body, token) {
     "GET /api/reports/attendance/summary": () => [],
   };
 
+  // Tasks on a project come from the V1 task endpoint with a filter, exactly as the real page
+  // asks for them - so this has to be decided before the exact-path lookup below, which would
+  // otherwise answer every /api/tasks request with the unfiltered list.
+  if (method === "GET" && path === "/api/tasks" && query?.get("projectId")) return paged(projectTasks);
+
+  // An exact route then wins over the id patterns further down. Without this, a pattern like
+  // /api/v2/projects/{id} swallows /api/v2/projects/dashboard and the page gets a 404 for a
+  // route that is right there in the map.
+  const exact = routes[`${method} ${path}`];
+  if (exact) return exact();
+
   if (method === "GET" && path.startsWith("/api/employees/") && path.endsWith("/leave-balances")) return balances;
   if (method === "GET" && path.startsWith("/api/employees/")) {
     const found = employees.find((e) => path.endsWith(e.id)) ?? employee;
     return { ...found, phone: "+234 800 000 0000", managerId: null, managerName: "Ibrahim Bello", startDate: plain(daysFromNow(-400)), roleKey: session.roleKey, createdAt: iso(now) };
   }
-  if (method === "POST" && /^\/api\/tasks\/[^/]+\/status$/.test(path)) return { ...tasks[0], status: body?.status ?? 1 };
+  if (method === "POST" && /^\/api\/tasks\/[^/]+\/status$/.test(path)) return { ...taskExtras, ...tasks[0], status: body?.status ?? 1 };
   if (method === "POST" && /^\/api\/notifications\//.test(path)) return undefined;
+
+  // ---- M2 routes with an id in the path.
+
+  if (method === "GET" && /^\/api\/v2\/projects\/[^/]+$/.test(path)) {
+    const found = projects.find((p) => path.endsWith(p.id));
+    return found ?? undefined;
+  }
+
+  if (method === "GET" && /^\/api\/v2\/projects\/[^/]+\/members$/.test(path)) return projectMembers;
+
+  if (method === "GET" && /^\/api\/v2\/projects\/[^/]+\/activity$/.test(path)) return paged(projectActivity);
+
+  if (method === "GET" && /^\/api\/v2\/tasks\/[^/]+\/checklist$/.test(path)) {
+    return [
+      { id: "c1", taskId: path.split("/")[4], title: "Measure the bays", position: 10, isDone: true,
+        completedAt: iso(daysFromNow(-1)), completedByEmployeeId: "m1" },
+      { id: "c2", taskId: path.split("/")[4], title: "Confirm the load rating", position: 20, isDone: false,
+        completedAt: null, completedByEmployeeId: null },
+    ];
+  }
+
+  if (method === "GET" && /^\/api\/v2\/tasks\/[^/]+\/comments$/.test(path)) {
+    return [
+      { id: "tc1", taskId: path.split("/")[4], authorEmployeeId: "m1", authorName: "Ibrahim Bello",
+        authorPhotoUrl: null, body: "Racking supplier confirmed for Tuesday.",
+        createdAt: iso(daysFromNow(-1)), editedAt: null, isMine: false },
+    ];
+  }
+
+  if (method === "GET" && /^\/api\/v2\/tasks\/[^/]+\/dependencies$/.test(path)) {
+    return [
+      { id: "td1", taskId: path.split("/")[4], dependsOnTaskId: "50000000-0000-0000-0000-000000000001",
+        dependsOnTitle: "Survey the Ikeja site", dependsOnStatus: 2,
+        dependsOnDueDate: plain(daysFromNow(-3)), isBlocking: false },
+    ];
+  }
+
+  // Attachments are deliberately unavailable, because the deployment this mock stands in for has
+  // no object storage - which is the state a development environment is actually in. The page is
+  // expected to explain it rather than fail.
+  if (method === "GET" && /^\/api\/v2\/tasks\/[^/]+\/attachments$/.test(path)) return "storage-unavailable";
+
+  if (method === "GET" && /^\/api\/v2\/tasks\/[^/]+\/activity$/.test(path)) return projectActivity;
 
   return routes[`${method} ${path}`]?.();
 }
@@ -294,7 +464,17 @@ http.createServer(async (req, res) => {
   if (!url.pathname.startsWith("/api/")) return send(404, {});
   if (!session) return send(401, { title: "Unauthorized", status: 401 });
 
-  const result = route(req.method, url.pathname, session, body, token);
+  const result = route(req.method, url.pathname, session, body, token, url.searchParams);
+
+  // The one sentinel this mock uses: object storage is not configured, which is a supported
+  // state the API reports as 503 and the page is expected to explain rather than fail.
+  if (result === "storage-unavailable") {
+    return send(503, {
+      title: "Not available",
+      detail: "File storage isn't configured for this deployment, so attachments aren't available yet.",
+      status: 503,
+    });
+  }
   if (result === undefined && !(req.method === "POST" && url.pathname.startsWith("/api/notifications/"))) {
     return send(404, { title: "Not found", detail: `Mock has no fixture for ${req.method} ${url.pathname}`, status: 404 });
   }

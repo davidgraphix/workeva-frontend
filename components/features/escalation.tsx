@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox, Input, Select } from "@/components/ui/field";
@@ -110,6 +110,7 @@ export function EscalationSection() {
         description="Who gets told when a task passes its due date, and how long after."
         action={
           <Button size="sm" variant="secondary" onClick={() => setAdding(true)}>
+            <Plus aria-hidden className="size-4" />
             Add a rung
           </Button>
         }
@@ -144,10 +145,12 @@ export function EscalationSection() {
       >
         {(data) => (
           <ol className="divide-y divide-slate-100">
+            {/* Each rung wraps on a phone: the day, the target and the controls are three things
+                that will not sit on one 375px line without truncating the part that matters. */}
             {data.map((rule, index) => (
               <li
                 key={rule.isDefault ? `default-${index}` : rule.id}
-                className="flex items-center gap-3 px-4 py-3"
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:flex-nowrap"
               >
                 <span className="numeric w-16 shrink-0 text-sm font-medium text-slate-900">
                   Day {rule.daysOverdue}
@@ -163,7 +166,7 @@ export function EscalationSection() {
                 {rule.isDefault ? (
                   <Badge tone="neutral">Default</Badge>
                 ) : (
-                  <>
+                  <div className="ml-auto flex shrink-0 items-center gap-3">
                     <Checkbox label="Active" checked={rule.isActive} onChange={() => toggle(rule)} />
                     <button
                       type="button"
@@ -173,7 +176,7 @@ export function EscalationSection() {
                     >
                       <X aria-hidden className="size-4" />
                     </button>
-                  </>
+                  </div>
                 )}
               </li>
             ))}
