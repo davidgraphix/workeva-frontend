@@ -54,6 +54,13 @@ export const Permission = {
   taskComment: "task.comment",
   taskAttach: "task.attach",
   taskDependencyManage: "task.dependency.manage",
+
+  // M3: Workeva Intelligence.
+  intelligenceView: "intelligence.view",
+  intelligenceAsk: "intelligence.ask",
+  intelligenceAlertManage: "intelligence.alert.manage",
+  intelligenceRiskView: "intelligence.risk.view",
+  intelligenceConfigure: "intelligence.configure",
 } as const;
 
 export type PermissionKey = (typeof Permission)[keyof typeof Permission];

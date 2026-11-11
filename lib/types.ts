@@ -999,3 +999,338 @@ export const projectActivityLabels: Record<string, string> = {
   task_dependency_added: "Dependency added",
   task_escalated: "Escalated",
 };
+
+
+// =============================================================================================
+// M3: Workeva Intelligence.
+//
+// One rule shapes all of these: a figure is never a bare number. It arrives with the period it
+// covers, the note that qualifies it, and whether it is a measurement, an estimate, a prediction
+// or unavailable - so the UI cannot accidentally present an approximation as a fact, and an
+// unavailable figure cannot be rendered as a zero.
+// =============================================================================================
+
+/** What kind of claim a figure makes. Rendered differently, deliberately. */
+export enum FigureKind {
+  /** Counted or computed from records. A fact about what happened. */
+  Measured = 0,
+  /** Derived with a documented approximation - an attendance rate's denominator, say. */
+  Estimated = 1,
+  /** Forward-looking. Never shown as a fact. */
+  Predicted = 2,
+  /** Could not be computed. Not zero, and never rendered as zero. */
+  Unavailable = 3,
+}
+
+export enum IntelligenceSeverity {
+  Information = 0,
+  Low = 1,
+  Medium = 2,
+  High = 3,
+  Critical = 4,
+}
+
+export enum AlertCategory {
+  Attendance = 0,
+  Leave = 1,
+  Project = 2,
+  Task = 3,
+  Workload = 4,
+  Approval = 5,
+  Department = 6,
+}
+
+export enum AlertStatus {
+  Open = 0,
+  Acknowledged = 1,
+  Resolved = 2,
+}
+
+export enum RiskBand {
+  Low = 0,
+  Moderate = 1,
+  Elevated = 2,
+  High = 3,
+}
+
+export enum RiskConfidence {
+  Insufficient = 0,
+  Low = 1,
+  Moderate = 2,
+  High = 3,
+}
+
+export enum AiMessageRole {
+  User = 0,
+  Assistant = 1,
+}
+
+export enum AiOutcome {
+  Succeeded = 0,
+  Failed = 1,
+  Unavailable = 2,
+  Refused = 3,
+  RateLimited = 4,
+  QuotaExceeded = 5,
+}
+
+export enum PeriodKind {
+  Today = 0,
+  ThisWeek = 1,
+  ThisMonth = 2,
+  LastMonth = 3,
+  ThisQuarter = 4,
+  Last30Days = 5,
+  Last90Days = 6,
+  Custom = 7,
+}
+
+export interface FigureRowResponse {
+  label: string;
+  value: number;
+  secondary: number | null;
+  subjectId: string | null;
+}
+
+export interface FigureResponse {
+  key: string;
+  title: string;
+  unit: string;
+  value: number | null;
+  kind: FigureKind;
+  periodLabel: string;
+  periodStart: string;
+  periodEnd: string;
+  note: string | null;
+  rows: FigureRowResponse[];
+}
+
+export interface AskResponse {
+  conversationId: string;
+  messageId: string;
+  answer: string;
+  figures: FigureResponse[];
+  outOfScope: boolean;
+  outOfScopeReason: string | null;
+  providerName: string;
+  providerModel: string | null;
+  promptVersion: string;
+  /** False when the built-in template provider wrote the prose rather than a model. */
+  writtenByModel: boolean;
+}
+
+export interface ConversationResponse {
+  id: string;
+  title: string;
+  lastMessageAt: string;
+  messageCount: number;
+  isArchived: boolean;
+}
+
+export interface ConversationMessageResponse {
+  id: string;
+  role: AiMessageRole;
+  body: string;
+  createdAt: string;
+  figures: FigureResponse[];
+  providerName: string | null;
+  providerModel: string | null;
+  promptVersion: string | null;
+  outcome: AiOutcome;
+}
+
+export interface ConversationDetailResponse {
+  id: string;
+  title: string;
+  lastMessageAt: string;
+  isArchived: boolean;
+  messages: ConversationMessageResponse[];
+}
+
+export interface AssistantStatusResponse {
+  available: boolean;
+  writtenByModel: boolean;
+  providerName: string;
+  dailyQuestionLimit: number;
+  questionsUsedToday: number;
+  questionsPerMinuteLimit: number;
+  maxQuestionLength: number;
+  availableTopics: string[];
+}
+
+export interface AnalyticsResponse {
+  periodLabel: string;
+  periodStart: string;
+  periodEnd: string;
+  figures: FigureResponse[];
+}
+
+export interface MetricCatalogueEntry {
+  key: string;
+  title: string;
+  answers: string;
+  family: string;
+  supportsPeriod: boolean;
+}
+
+export interface InsightResponse {
+  id: string;
+  kind: string;
+  metricKey: string;
+  title: string;
+  summary: string;
+  severity: IntelligenceSeverity;
+  periodStart: string;
+  periodEnd: string;
+  createdAt: string;
+}
+
+export interface AlertResponse {
+  id: string;
+  ruleKey: string;
+  category: AlertCategory;
+  severity: IntelligenceSeverity;
+  title: string;
+  body: string;
+  status: AlertStatus;
+  subjectType: string | null;
+  subjectId: string | null;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  /** How many times the underlying situation has been detected. Shown, not hidden. */
+  occurrenceCount: number;
+  acknowledgedByEmployeeId: string | null;
+  acknowledgedByName: string | null;
+  acknowledgedAt: string | null;
+  resolvedAt: string | null;
+  resolutionNote: string | null;
+  evidence: FigureRowResponse[];
+}
+
+export interface RiskResponse {
+  id: string;
+  category: string;
+  subjectType: string;
+  subjectId: string;
+  subjectLabel: string;
+  score: number;
+  band: RiskBand;
+  confidence: RiskConfidence;
+  /** True when there was not enough history. The score carries no information and is not shown. */
+  isInsufficientData: boolean;
+  methodKey: string;
+  methodVersion: string;
+  evidence: FigureRowResponse[];
+  explanation: string;
+  recommendedAction: string;
+  periodStart: string;
+  periodEnd: string;
+  assessedAt: string;
+}
+
+export interface RunStatusResponse {
+  runKind: string;
+  lastStartedAt: string | null;
+  lastCompletedAt: string | null;
+  lastSucceeded: boolean | null;
+  itemsProduced: number;
+  failureReason: string | null;
+}
+
+export interface IntelligenceDashboardResponse {
+  periodLabel: string;
+  periodStart: string;
+  periodEnd: string;
+  headline: FigureResponse[];
+  workforce: FigureResponse[];
+  work: FigureResponse[];
+  openAlerts: AlertResponse[];
+  topRisks: RiskResponse[];
+  recentInsights: InsightResponse[];
+  runs: RunStatusResponse[];
+  /** Sections absent because this caller may not see them. */
+  withheld: string[];
+}
+
+export interface AlertRuleSettingResponse {
+  ruleKey: string;
+  title: string;
+  description: string;
+  isEnabled: boolean;
+  threshold: number | null;
+  defaultThreshold: number;
+  windowDays: number | null;
+  defaultWindowDays: number;
+  minimumSeverity: IntelligenceSeverity;
+}
+
+export const severityLabels: Record<IntelligenceSeverity, string> = {
+  [IntelligenceSeverity.Information]: "Information",
+  [IntelligenceSeverity.Low]: "Low",
+  [IntelligenceSeverity.Medium]: "Medium",
+  [IntelligenceSeverity.High]: "High",
+  [IntelligenceSeverity.Critical]: "Critical",
+};
+
+export const alertCategoryLabels: Record<AlertCategory, string> = {
+  [AlertCategory.Attendance]: "Attendance",
+  [AlertCategory.Leave]: "Leave",
+  [AlertCategory.Project]: "Projects",
+  [AlertCategory.Task]: "Tasks",
+  [AlertCategory.Workload]: "Workload",
+  [AlertCategory.Approval]: "Approvals",
+  [AlertCategory.Department]: "Departments",
+};
+
+export const alertStatusLabels: Record<AlertStatus, string> = {
+  [AlertStatus.Open]: "Open",
+  [AlertStatus.Acknowledged]: "Acknowledged",
+  [AlertStatus.Resolved]: "Resolved",
+};
+
+export const riskBandLabels: Record<RiskBand, string> = {
+  [RiskBand.Low]: "Low",
+  [RiskBand.Moderate]: "Moderate",
+  [RiskBand.Elevated]: "Elevated",
+  [RiskBand.High]: "High",
+};
+
+export const riskConfidenceLabels: Record<RiskConfidence, string> = {
+  [RiskConfidence.Insufficient]: "Not enough data",
+  [RiskConfidence.Low]: "Low confidence",
+  [RiskConfidence.Moderate]: "Moderate confidence",
+  [RiskConfidence.High]: "High confidence",
+};
+
+export const riskCategoryLabels: Record<string, string> = {
+  project_delivery: "Project delivery",
+  task_deadline: "Task deadlines",
+  attendance_deterioration: "Attendance",
+  workload_overload: "Workload",
+  department_performance: "Department performance",
+};
+
+export const periodLabels: Record<PeriodKind, string> = {
+  [PeriodKind.Today]: "Today",
+  [PeriodKind.ThisWeek]: "This week",
+  [PeriodKind.ThisMonth]: "This month",
+  [PeriodKind.LastMonth]: "Last month",
+  [PeriodKind.ThisQuarter]: "This quarter",
+  [PeriodKind.Last30Days]: "Last 30 days",
+  [PeriodKind.Last90Days]: "Last 90 days",
+  [PeriodKind.Custom]: "Custom range",
+};
+
+/**
+ * How a figure's kind reads to a person.
+ *
+ * Shown beside any figure that is not a plain measurement, because the difference between "94%
+ * of shifts were attended" and "roughly 94%, not counting public holidays" is the difference
+ * between a figure somebody can act on and one they will be annoyed about later.
+ */
+export const figureKindLabels: Record<FigureKind, string> = {
+  [FigureKind.Measured]: "Measured",
+  [FigureKind.Estimated]: "Approximate",
+  [FigureKind.Predicted]: "Prediction",
+  [FigureKind.Unavailable]: "Not available",
+};

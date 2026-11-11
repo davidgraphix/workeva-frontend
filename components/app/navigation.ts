@@ -13,6 +13,7 @@ import {
   Bell,
   Settings,
   ShieldCheck,
+  Sparkles,
   User,
   Users,
 } from "lucide-react";
@@ -62,6 +63,10 @@ export const primaryNavigation: NavItem[] = [
   // when they are on none, rather than the menu item disappearing and reappearing as they are
   // added to work.
   { href: "/projects", label: "Projects", icon: FolderKanban, requires: [Permission.projectView] },
+  // Intelligence sits beside reports rather than inside it: reports are what somebody asks for,
+  // and this is what the platform noticed. Shown to anybody holding intelligence.view, and the
+  // page itself explains when the organization has the feature switched off.
+  { href: "/intelligence", label: "Intelligence", icon: Sparkles, requires: [Permission.intelligenceView] },
   { href: "/reports", label: "Reports", icon: FileBarChart, requires: [Permission.reportsView] },
   { href: "/audit", label: "Audit trail", icon: ShieldCheck, requires: [Permission.auditView] },
 ];

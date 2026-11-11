@@ -150,6 +150,19 @@ export const queryKeys = {
   projectActivity: (key: string) => ["project-activity", key] as const,
   taskActivity: (id: string) => ["task-activity", id] as const,
   taskChecklist: (id: string) => ["task-checklist", id] as const,
+
+  // M3: Workeva Intelligence.
+  intelligenceDashboard: (filters?: unknown) => withFilters("intelligence-dashboard", filters),
+  intelligenceAnalytics: (family: string, filters?: unknown) =>
+    withFilters(`intelligence-analytics-${family}`, filters),
+  intelligenceCatalogue: () => ["intelligence-catalogue"] as const,
+  intelligenceAlerts: (filters?: unknown) => withFilters("intelligence-alerts", filters),
+  intelligenceInsights: () => ["intelligence-insights"] as const,
+  intelligenceRisks: (filters?: unknown) => withFilters("intelligence-risks", filters),
+  intelligenceRules: () => ["intelligence-rules"] as const,
+  assistantStatus: () => ["assistant-status"] as const,
+  conversations: (filters?: unknown) => withFilters("conversations", filters),
+  conversation: (id: string) => ["conversation", id] as const,
   taskComments: (id: string) => ["task-comments", id] as const,
   taskDependencies: (id: string) => ["task-dependencies", id] as const,
   taskAttachments: (id: string) => ["task-attachments", id] as const,

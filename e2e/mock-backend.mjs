@@ -25,7 +25,9 @@ const users = {
     permissions: ["attendance.self", "attendance.view", "department.view", "employee.view", "leave.request", "leave.view", "task.create", "task.update", "task.view",
       "operations.view", "operations.report.create", "operations.report.view",
       // M2: an ordinary employee sees the projects they are on and can take part in their tasks.
-      "project.view", "task.comment", "task.attach"],
+      "project.view", "task.comment", "task.attach",
+      // M3: an employee may ask about their own figures. Their Self scope is what narrows them.
+      "intelligence.view", "intelligence.ask"],
   },
   "owner-token": {
     user: { id: "00000000-0000-0000-0000-0000000000a1", email: "ada.okonkwo@acme-demo.test" },
@@ -41,7 +43,10 @@ const users = {
       // M2: the owner runs the portfolio and sets the escalation ladder.
       "project.view", "project.create", "project.update", "project.archive",
       "project.member.manage", "project.escalation.manage",
-      "task.comment", "task.attach", "task.dependency.manage"],
+      "task.comment", "task.attach", "task.dependency.manage",
+      // M3: the owner gets the whole intelligence layer.
+      "intelligence.view", "intelligence.ask", "intelligence.alert.manage",
+      "intelligence.risk.view", "intelligence.configure"],
   },
 };
 
@@ -57,6 +62,381 @@ const today = (token) => { const clockedIn = clockedInBy.get(token) ?? null; ret
   timezone: "Africa/Lagos", workDayStart: "08:00:00", workDayEnd: "17:00:00", gracePeriodMinutes: 15, isWorkingDay: true,
   locations: [location],
 }; };
+
+// =============================================================================================
+// M3: Workeva Intelligence fixtures.
+// =============================================================================================
+
+/**
+ * A figure, in the shape the real API returns.
+ *
+ * `kind` is the important field: 0 measured, 1 approximate, 2 prediction, 3 unavailable. The
+ * fixtures below deliberately include an approximate figure and an unavailable one, so the
+ * browser tests exercise the paths where the UI must not show a number as a plain fact or
+ * render an unavailable figure as a zero.
+ */
+function figure(key, title, value, unit, kind = 0, note = null, rows = []) {
+  return {
+    key,
+    title,
+    unit,
+    value,
+    kind,
+    periodLabel: "this month",
+    periodStart: "2026-11-01",
+    periodEnd: "2026-11-10",
+    note,
+    rows,
+  };
+}
+
+const workforceFigures = [
+  figure("workforce.headcount.active", "Active employees", 24, "employees"),
+  figure(
+    "attendance.rate",
+    "Attendance rate",
+    91.4,
+    "%",
+    1,
+    "Expected days are active employees times weekdays in the period. Public holidays are not deducted, so the rate is slightly conservative.",
+    [
+      { label: "Days attended", value: 412, secondary: null, subjectId: null },
+      { label: "Expected working days", value: 451, secondary: null, subjectId: null },
+    ],
+  ),
+  figure("leave.pending.count", "Pending leave requests", 3, "requests"),
+  figure(
+    "workforce.headcount.by_department",
+    "Employees by department",
+    null,
+    "employees",
+    0,
+    null,
+    [
+      { label: "Engineering", value: 14, secondary: null, subjectId: null },
+      { label: "Sales", value: 7, secondary: null, subjectId: null },
+      { label: "No department", value: 3, secondary: null, subjectId: null },
+    ],
+  ),
+];
+
+const workFigures = [
+  figure("project.overdue", "Overdue projects", 2, "projects", 0, "The value against each project is how many days overdue it is.", [
+    { label: "Harbour expansion", value: 12, secondary: null, subjectId: null },
+  ]),
+  figure("task.overdue", "Overdue tasks", 9, "tasks", 0, "Broken down by who the task is assigned to.", [
+    { label: "Chiamaka Eze", value: 4, secondary: null, subjectId: null },
+    { label: "Unassigned", value: 2, secondary: null, subjectId: null },
+  ]),
+  // An unavailable figure, so the UI's "not zero" path is exercised in a browser.
+  figure(
+    "project.delivery_performance",
+    "Project delivery performance",
+    null,
+    "",
+    3,
+    "No projects were completed in this month, so there is no delivery performance to report for it.",
+  ),
+];
+
+const managementFigures = [
+  figure(
+    "management.organization_health",
+    "Organization health",
+    78.5,
+    "out of 100",
+    1,
+    "An unweighted average of the 3 components listed, each scaled to 100. It is an index for comparing one period with another, not a measurement of anything in itself.",
+    [
+      { label: "Attendance", value: 91.4, secondary: null, subjectId: null },
+      { label: "Task delivery", value: 72, secondary: null, subjectId: null },
+      { label: "Project health", value: 72, secondary: null, subjectId: null },
+    ],
+  ),
+  figure("management.attention_summary", "What needs attention", 14, "items", 0, "Each line is a count of outstanding items.", [
+    { label: "Overdue projects", value: 2, secondary: null, subjectId: null },
+    { label: "Overdue tasks", value: 9, secondary: null, subjectId: null },
+    { label: "Pending leave requests", value: 3, secondary: null, subjectId: null },
+  ]),
+];
+
+function analytics(figures) {
+  return {
+    periodLabel: "this month",
+    periodStart: "2026-11-01",
+    periodEnd: "2026-11-10",
+    figures,
+  };
+}
+
+const metricCatalogue = [
+  { key: "workforce.headcount.active", title: "Active employees", answers: "How many employees are currently active.", family: "Workforce", supportsPeriod: false },
+  { key: "attendance.rate", title: "Attendance rate", answers: "What percentage of expected working days were attended.", family: "Attendance", supportsPeriod: true },
+];
+
+const intelligenceAlerts = [
+  {
+    id: "al-1",
+    ruleKey: "project.overdue",
+    category: 2,
+    severity: 3,
+    title: "Harbour expansion is 12 days overdue",
+    body: "Harbour expansion was due on 29 Oct 2026 and is still open at 64% complete. Either the work or the date needs to move.",
+    status: 0,
+    subjectType: "project",
+    subjectId: "20000000-0000-0000-0000-000000000001",
+    firstSeenAt: iso(daysFromNow(-12)),
+    lastSeenAt: iso(now),
+    occurrenceCount: 24,
+    acknowledgedByEmployeeId: null,
+    acknowledgedByName: null,
+    acknowledgedAt: null,
+    resolvedAt: null,
+    resolutionNote: null,
+    evidence: [
+      { label: "Days overdue", value: 12, secondary: null, subjectId: null },
+      { label: "Progress %", value: 64, secondary: null, subjectId: null },
+      { label: "Overdue tasks", value: 3, secondary: null, subjectId: null },
+    ],
+  },
+  {
+    id: "al-2",
+    ruleKey: "leave.pending_backlog",
+    category: 1,
+    severity: 2,
+    title: "Chiamaka Eze's leave request has waited 7 days",
+    body: "Chiamaka Eze asked for 3 day(s) of leave 7 days ago and the request starts 20 Nov. It still has no decision.",
+    status: 1,
+    subjectType: "leave_request",
+    subjectId: "30000000-0000-0000-0000-000000000001",
+    firstSeenAt: iso(daysFromNow(-2)),
+    lastSeenAt: iso(now),
+    occurrenceCount: 4,
+    acknowledgedByEmployeeId: "00000000-0000-0000-0000-0000000000a1",
+    acknowledgedByName: "Ada Okonkwo",
+    acknowledgedAt: iso(daysFromNow(-1)),
+    resolvedAt: null,
+    resolutionNote: null,
+    evidence: [{ label: "Days waiting", value: 7, secondary: null, subjectId: null }],
+  },
+];
+
+const intelligenceRisks = [
+  {
+    id: "rk-1",
+    category: "project_delivery",
+    subjectType: "project",
+    subjectId: "20000000-0000-0000-0000-000000000001",
+    subjectLabel: "Harbour expansion",
+    score: 81,
+    band: 3,
+    confidence: 3,
+    isInsufficientData: false,
+    methodKey: "project_delivery.schedule_vs_progress",
+    methodVersion: "1",
+    evidence: [
+      { label: "Progress %", value: 64, secondary: null, subjectId: null },
+      { label: "Tasks", value: 18, secondary: null, subjectId: null },
+      { label: "Overdue tasks", value: 3, secondary: null, subjectId: null },
+    ],
+    explanation:
+      "104% of the schedule has passed and 64% of the work is done, a gap of 40 points, with 3 task(s) already overdue. The score weights the schedule gap at 70% and overdue tasks at 30%.",
+    recommendedAction:
+      "Decide this week whether the date moves or the scope does. Both are better than finding out on the due date.",
+    periodStart: "2026-09-01",
+    periodEnd: "2026-11-10",
+    assessedAt: iso(now),
+  },
+  {
+    // An insufficient-data assessment, so the browser test can assert that no score is shown.
+    id: "rk-2",
+    category: "attendance_deterioration",
+    subjectType: "employee",
+    subjectId: "00000000-0000-0000-0000-0000000000e1",
+    subjectLabel: "Chiamaka Eze",
+    score: 0,
+    band: 0,
+    confidence: 0,
+    isInsufficientData: true,
+    methodKey: "attendance_deterioration.period_comparison",
+    methodVersion: "1",
+    evidence: [],
+    explanation:
+      "There are fewer than 10 recorded days in one of the two comparison windows, which is not enough to tell a trend from normal variation.",
+    recommendedAction: "No action. Assess again once more attendance has been recorded.",
+    periodStart: "2026-09-12",
+    periodEnd: "2026-11-10",
+    assessedAt: iso(now),
+  },
+];
+
+const intelligenceInsights = [
+  {
+    id: "in-1",
+    kind: "project_slippage",
+    metricKey: "project.at_risk",
+    title: "Two projects slipped this month",
+    summary: "Harbour expansion and Depot refit both passed their due dates without a new one being set.",
+    severity: 2,
+    periodStart: "2026-11-01",
+    periodEnd: "2026-11-10",
+    createdAt: iso(now),
+  },
+];
+
+const alertRules = [
+  {
+    ruleKey: "attendance.repeated_lateness",
+    title: "Repeated lateness",
+    description:
+      "Raises an alert when the same person is recorded late several times inside the window. Threshold is measured in late arrivals in the window.",
+    isEnabled: true,
+    threshold: null,
+    defaultThreshold: 4,
+    windowDays: null,
+    defaultWindowDays: 14,
+    minimumSeverity: 0,
+  },
+  {
+    ruleKey: "project.overdue",
+    title: "Project overdue",
+    description:
+      "Raises an alert when an open project passes its due date by more than the threshold. Threshold is measured in days overdue.",
+    isEnabled: true,
+    threshold: 2,
+    defaultThreshold: 1,
+    windowDays: null,
+    defaultWindowDays: 0,
+    minimumSeverity: 1,
+  },
+];
+
+const conversations = [
+  {
+    id: "cv-1",
+    title: "How is attendance this month?",
+    lastMessageAt: iso(now),
+    messageCount: 2,
+    isArchived: false,
+  },
+];
+
+function conversationDetail(id) {
+  return {
+    id,
+    title: "How is attendance this month?",
+    lastMessageAt: iso(now),
+    isArchived: false,
+    messages: [
+      {
+        id: "ms-1",
+        role: 0,
+        body: "How is attendance this month?",
+        createdAt: iso(now),
+        figures: [],
+        providerName: null,
+        providerModel: null,
+        promptVersion: null,
+        outcome: 0,
+      },
+      {
+        id: "ms-2",
+        role: 1,
+        body:
+          "Attendance rate for this month: 91.4%. Expected days are active employees times weekdays in the period. Public holidays are not deducted, so the rate is slightly conservative.",
+        createdAt: iso(now),
+        figures: [workforceFigures[1]],
+        providerName: "workeva.deterministic",
+        providerModel: "template",
+        promptVersion: "narration.v1",
+        outcome: 0,
+      },
+    ],
+  };
+}
+
+function assistantStatus(session) {
+  return {
+    available: true,
+    writtenByModel: false,
+    providerName: "workeva.deterministic",
+    dailyQuestionLimit: 200,
+    questionsUsedToday: 7,
+    questionsPerMinuteLimit: 6,
+    maxQuestionLength: 600,
+    availableTopics:
+      session.roleKey === "owner"
+        ? ["Active employees", "Attendance rate", "Overdue projects", "Workload by person"]
+        : ["Active employees", "Pending leave requests"],
+  };
+}
+
+function askAnswer(body) {
+  const question = String(body?.question ?? "");
+
+  // A pay question is refused, exactly as the real assistant refuses it - so the browser test
+  // can assert that the refusal renders as an answer rather than as an error.
+  if (/salary|pay|wage/i.test(question)) {
+    return {
+      conversationId: "cv-1",
+      messageId: "ms-new",
+      answer: "Workeva does not hold pay or payroll data, so there is no figure for that.",
+      figures: [],
+      outOfScope: true,
+      outOfScopeReason: "Workeva does not hold pay or payroll data, so there is no figure for that.",
+      providerName: "workeva.deterministic",
+      providerModel: null,
+      promptVersion: "intent.v1",
+      writtenByModel: false,
+    };
+  }
+
+  return {
+    conversationId: "cv-1",
+    messageId: "ms-new",
+    answer: "Attendance rate for this month: 91.4%.",
+    figures: [workforceFigures[1]],
+    outOfScope: false,
+    outOfScopeReason: null,
+    providerName: "workeva.deterministic",
+    providerModel: "template",
+    promptVersion: "narration.v1",
+    writtenByModel: false,
+  };
+}
+
+function intelligenceDashboard() {
+  return {
+    periodLabel: "this month",
+    periodStart: "2026-11-01",
+    periodEnd: "2026-11-10",
+    headline: managementFigures,
+    workforce: workforceFigures,
+    work: workFigures,
+    openAlerts: intelligenceAlerts.filter((a) => a.status !== 2),
+    topRisks: intelligenceRisks.filter((r) => !r.isInsufficientData),
+    recentInsights: intelligenceInsights,
+    runs: [
+      {
+        runKind: "alerts",
+        lastStartedAt: iso(daysFromNow(-0.2)),
+        lastCompletedAt: iso(daysFromNow(-0.2)),
+        lastSucceeded: true,
+        itemsProduced: 2,
+        failureReason: null,
+      },
+      {
+        runKind: "risk",
+        lastStartedAt: iso(daysFromNow(-0.2)),
+        lastCompletedAt: iso(daysFromNow(-0.2)),
+        lastSucceeded: true,
+        itemsProduced: 1,
+        failureReason: null,
+      },
+    ],
+    withheld: [],
+  };
+}
 
 const paged = (items) => ({ items, page: 1, pageSize: 20, totalCount: items.length, totalPages: items.length ? 1 : 0, hasNextPage: false });
 
@@ -342,6 +722,22 @@ function route(method, path, session, body, token, query) {
     "POST /api/operations/activities": () => ({ id: "act-new", name: body?.name ?? "New activity", description: body?.description ?? null, unit: body?.unit ?? "kg", operationLocationId: body?.operationLocationId ?? null, operationLocationName: null, isActive: true }),
     "POST /api/operations/staff": () => ({ ...operationStaff[0], id: "sa-new", employeeId: body?.employeeId ?? operationStaff[0].employeeId, role: body?.role ?? 0 }),
 
+    // M3: Workeva Intelligence. Every figure carries its period, its kind and its note, because
+    // that is what the real API returns and a mock that dropped them would let a page ship that
+    // renders an approximation as a fact.
+    "GET /api/v2/intelligence/dashboard": () => intelligenceDashboard(),
+    "GET /api/v2/intelligence/alerts": () => paged(intelligenceAlerts),
+    "GET /api/v2/intelligence/risks": () => paged(intelligenceRisks),
+    "GET /api/v2/intelligence/insights": () => intelligenceInsights,
+    "GET /api/v2/intelligence/analytics/workforce": () => analytics(workforceFigures),
+    "GET /api/v2/intelligence/analytics/work": () => analytics(workFigures),
+    "GET /api/v2/intelligence/analytics/management": () => analytics(managementFigures),
+    "GET /api/v2/intelligence/analytics/catalogue": () => metricCatalogue,
+    "GET /api/v2/intelligence/settings/alert-rules": () => alertRules,
+    "GET /api/v2/intelligence/ask/status": () => assistantStatus(session),
+    "GET /api/v2/intelligence/ask/conversations": () => paged(conversations),
+    "POST /api/v2/intelligence/ask": () => askAnswer(body),
+
     "GET /api/tasks": () => paged(tasks.map((t) => ({ ...taskExtras, ...t }))),
     "GET /api/tasks/summary": () => ({ total: 2, toDo: 1, inProgress: 1, completed: 0, cancelled: 0, overdue: 1, dueToday: 0 }),
 
@@ -383,6 +779,48 @@ function route(method, path, session, body, token, query) {
   }
   if (method === "POST" && /^\/api\/tasks\/[^/]+\/status$/.test(path)) return { ...taskExtras, ...tasks[0], status: body?.status ?? 1 };
   if (method === "POST" && /^\/api\/notifications\//.test(path)) return undefined;
+
+  // ---- M3 routes with an id in the path.
+
+  if (method === "GET" && /^\/api\/v2\/intelligence\/ask\/conversations\/[^/]+$/.test(path)) {
+    const id = path.split("/").pop();
+    return conversationDetail(id);
+  }
+
+  if (method === "POST" && /^\/api\/v2\/intelligence\/alerts\/[^/]+\/(acknowledge|resolve)$/.test(path)) {
+    const resolving = path.endsWith("/resolve");
+    const id = path.split("/")[5];
+    const found = intelligenceAlerts.find((a) => a.id === id) ?? intelligenceAlerts[0];
+
+    return {
+      ...found,
+      status: resolving ? 2 : 1,
+      acknowledgedAt: iso(now),
+      acknowledgedByName: "Ada Okonkwo",
+      resolvedAt: resolving ? iso(now) : null,
+      resolutionNote: resolving ? (body?.note ?? null) : null,
+    };
+  }
+
+  if (method === "PUT" && /^\/api\/v2\/intelligence\/ask\/conversations\/[^/]+\/archive$/.test(path)) {
+    return { ...conversations[0], isArchived: query?.get("archived") === "true" };
+  }
+
+  if (method === "DELETE" && /^\/api\/v2\/intelligence\/ask\/conversations\/[^/]+$/.test(path)) {
+    return undefined;
+  }
+
+  if (method === "PUT" && path === "/api/v2/intelligence/settings/alert-rules") {
+    const found = alertRules.find((r) => r.ruleKey === body?.ruleKey) ?? alertRules[0];
+
+    return {
+      ...found,
+      isEnabled: body?.isEnabled ?? found.isEnabled,
+      threshold: body?.threshold ?? null,
+      windowDays: body?.windowDays ?? null,
+      minimumSeverity: body?.minimumSeverity ?? found.minimumSeverity,
+    };
+  }
 
   // ---- M2 routes with an id in the path.
 
